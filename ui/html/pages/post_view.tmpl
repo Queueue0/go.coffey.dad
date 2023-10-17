@@ -1,0 +1,39 @@
+{{define "title"}}{{.Post.Title}}{{end}}
+{{define "scripts"}}
+<link rel="stylesheet" href="/static/css/post.css">
+{{end}}
+
+{{define "main"}}
+<div>
+  <a class="button ml-5 is-link is-light" href="/blog"><i class="pr-1" data-feather="arrow-left-circle"></i> Back to all
+    posts</a>
+  <div class="container px-5">
+    <div class="columns">
+      {{with .Post}}
+        <div class="column is-11-desktop is-four-fifths-tablet">
+          <h1 class="title is-1 is-italic">{{.Title}}</h1>
+          <p class="is-italic has-text-weight-light">
+            Posted {{humanDate .Created}}
+            {{if (ne .Modified .Created)}}
+            <br>
+            Edited &nbsp;{{humanDate .Modified}}
+            {{end}}
+          </p>
+        </div>
+      {{end}}
+      <div class="column">
+        {{if .IsAuthenticated}}
+          <a class="button" href="/blog/edit/{{.Post.ID}}">Edit
+          Post</a>
+        {{end}}
+      </div>
+    </div>
+    <hr>
+    {{with .Post}}
+      <div class="content pb-6">
+        {{.Body}}
+      </div>
+    {{end}}
+  </div>
+</div>
+{{end}}

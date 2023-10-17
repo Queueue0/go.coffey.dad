@@ -1,0 +1,48 @@
+{{define "title"}}Blog{{end}}
+
+{{define "scripts"}}{{end}}
+
+{{define "main"}}
+<div class="container is-max-desktop">
+  {{if .IsAuthenticated}}
+    <div class="level mb-3 ml-3 is-mobile">
+      <div class="level-left">
+        <div class="level-item">
+          <a class="button is-link is-light" href="/blog/new">
+            <i class="pr-1" data-feather="plus-square"></i>Add New Post</a>
+        </div>
+        <div class="level-item">
+          <a class="button is-link is-light" href="/upload">
+            <i class="pr-1" data-feather="folder-plus"></i>Upload Files</a>
+        </div>
+      </div>
+    </div>
+  {{end}}
+  {{range .Posts}}
+  <div class="card mb-3 mx-3">
+    <header class="card-header">
+      <p class="card-header-title">
+        {{.Title}}
+      </p>
+      <p class="card-header-icon">
+        Posted {{humanDate .Created}}
+        {{if (ne .Modified .Created)}}
+        <br>
+        Edited &nbsp;{{humanDate .Modified}}
+        {{end}}
+      </p>
+    </header>
+    <div class="card-content is-clipped readmore-card">
+      <div class="content">
+        {{.Body}}
+        <span class="readmore">
+          <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.ID}}">
+            Read Full Post
+          </a>
+        </span>
+      </div>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{end}}

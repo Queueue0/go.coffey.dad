@@ -1,0 +1,55 @@
+{{define "title"}}Upload Images{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/upload.js"></script> 
+{{end}}
+
+{{define "main"}}
+<div class="container">
+  <h2 class="title is-2 mb-1">Upload Files</h2>
+  <p class="has-text-weight-light is-italic mb-1">Upload any number of files</p>
+  <hr>
+  {{range .Form.NonFieldErrors}}
+    <div class="message is-danger">
+      <div class="message-body">
+        {{.}}
+      </div>
+    </div>
+  {{end}}
+  <form enctype="multipart/form-data" method="post">
+    <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+    <div class="level">
+      <div class="level-item">
+        <div class="file has-name is-boxed">
+          <label class="file-label">
+            <input class="file-input" type="file" name="file" multiple>
+            <span class="file-cta">
+              <span class="file-icon">
+                <i data-feather="upload"></i>
+              </span>
+              <span class="file-label">
+                Choose a file…
+              </span>
+            </span>
+            <span class="file-name" id="filename">
+              No File Chosen
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="field is-grouped is-flex is-justify-content-center">
+      <p class="control">
+        <button type="submit" class="button is-primary">
+          Submit
+        </button>
+      </p>
+      <p class="control">
+        <a class="button is-light" href="/blog">
+          Cancel
+        </a>
+      </p>
+    </div>
+  </form>
+</div>
+{{end}}

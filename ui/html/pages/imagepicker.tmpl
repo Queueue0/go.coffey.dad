@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{{define "title"}}Choose Image{{end}}
+
+{{define "scripts"}}
+  <link rel="stylesheer" href="/static/css/imagepicker.css">
+{{end}}
+
+{{define "main"}}
+  <div class="columns is-multiline">
+    {{range .FileNames}}
+      <div class="column is-one-fifth">
+        <div class="is-flex is-justify-content-center">
+          <img src="/uploads/{{.}}" class="is-clickable"></img>
+        </div>
+        <div class="has-text-centered">
+          <p>{{.}}</p>
+        </div>
+      </div>
+    {{end}}
+  </div>
+  <script src="/static/js/image_picker.js"></script>
+{{end}}

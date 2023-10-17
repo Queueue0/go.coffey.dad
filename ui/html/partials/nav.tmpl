@@ -1,0 +1,35 @@
+{{define "nav"}}
+<nav class="navbar is-primary mb-3" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="/">
+      coffey.dad
+    </a>
+    <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu" id="navMenu">
+    <div class="navbar-start">
+      <a class="navbar-item" href="/blog">
+        Blog
+      </a>
+    </div>
+    {{if .IsAuthenticated}}
+      <div class="navbar-end">
+        <div class="navbar-item">
+          <div class="field is-grouped">
+            <form method="POST" action="/logout" class="control">
+              <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+              <button class="button is-primary is-light">
+                Log Out
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {{end}}
+  </div>
+</nav>
+{{end}}

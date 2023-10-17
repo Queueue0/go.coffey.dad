@@ -1,0 +1,60 @@
+{{define "title"}}{{if .NewPost}}New Post{{else}}Edit Post{{end}}{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/showdown.min.js"></script>
+<script src="/static/js/add_edit.js"></script>
+{{end}}
+
+{{define "main"}}
+<div class="container is-max-desktop">
+  <form method="post" action="{{if .NewPost}}/blog/new{{else}}/blog/edit/{{.Post.ID}}{{end}}">
+    <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+    <div class="field">
+      {{with .Form.FieldErrors.title}}
+      <label class="has-text-danger">{{.}}</label>
+      {{end}}
+      <div class="control">
+        <input class="input" type="text" name="title" placeholder="Title" value="{{.Form.Title}}">
+      </div>
+    </div>
+    <div class="field">
+      {{with .Form.FieldErrors.body}}
+      <label class="has-text-danger">{{.}}</label>
+      {{end}}
+      <div class="control">
+        <textarea class="textarea" name="body" id="bodybox" placeholder="Body" rows="26">{{.Form.Body}}</textarea>
+      </div>
+    </div>
+    <div class="level">
+      <div class="level-left">
+        <div class="level-item">
+          <div class="field is-grouped">
+            <div class="control">
+              <button type="submit" class="button is-link">Submit</button>
+            </div>
+            <div class="control">
+              <a href="/blog" class="button is-link is-light">Cancel</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
+          <button type="button" class="button" id="insert-image">Insert Image</button>
+        </div>
+      </div>
+    </div>
+  </form>
+  <div class="card mt-3">
+    <div class="card-header">
+      <p class="card-header-title">
+        Preview
+      </p>
+    </div>
+    <div class="card-content">
+      <div class="content" id="preview">
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

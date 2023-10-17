@@ -1,0 +1,51 @@
+{{define "title"}}Login{{end}}
+
+{{define "scripts"}}{{end}}
+
+{{define "main"}}
+<div class="container">
+  <div class="columns is-centered is-vcentered">
+    <div class="column is-5-tablet is-4-desktop is-3-widescreen">
+      {{range .Form.NonFieldErrors}}
+        <div class="message is-danger">
+          <div class="message-body">
+            {{.}}
+          </div>
+        </div>
+      {{end}}
+      <form method="POST" action="/login" class="box">
+        <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+        <div class="field">
+          <label class="label">Username</label>
+          {{with .Form.FieldErrors.username}}
+            <label class="has-text-danger">{{.}}</label>
+          {{end}}
+          <div class="control has-icons-left">
+            <input type="text" name="username" class="input">
+            <span class="icon is-left">
+              <i data-feather="user"></i>
+            </span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Password</label>
+          {{with .Form.FieldErrors.password}}
+            <label class="has-text-danger">{{.}}</label>
+          {{end}}
+          <div class="control has-icons-left">
+            <input type="password" name="password" class="input">
+            <span class="icon is-left">
+              <i data-feather="lock"></i>
+            </span>
+          </div>
+        </div>
+        <div class="field">
+          <button class="button is-primary" type="submit">
+            Login
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}

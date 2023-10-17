@@ -1,0 +1,91 @@
+{{define "title"}}Home{{end}}
+{{define "scripts"}}{{end}}
+
+{{define "main"}}
+<div class="container is-fluid">
+  <div class="columns is-desktop">
+    <div class="column is-one-quarter-desktop">
+      <div class="card mb-3">
+        <div class="card-image">
+          <figure class="image is-3by4">
+            <img src="/static/img/me.jpeg" alt="Me sitting in Disney World holding a lightsaber"
+              title="TODO: Get a more professional picture">
+          </figure>
+        </div>
+        <div class="card-content">
+          <div class="tile is-vertical notification is-primary">
+            <p class="title">Joshua Coffey</p>
+          </div>
+          <div class="content">
+            <p>
+              My name is Joshua Coffey and I'm a software engineer currently based in Orlando, Florida. I live here
+              with
+              my fiancee and our pets (two cats and a dog). I have too many hobbies to count due to a little thing
+              called "<a href="https://youtube.com/shorts/ydk_pc-jx1c?si=_w6BvzLIieKINl5-">cool guy syndrome</a>"
+              (severe ADHD) and will be posting about them and anything else I feel like posting about on my blog
+              here.
+            </p>
+            <div>
+              <a class="tag is-link is-light is-medium mb-1" href="https://github.com/Queueue0">
+                <span class="icon-text">
+                  <span class="icon">
+                    <i data-feather="github"></i>
+                  </span>
+                  <span>@Queueue0</span>
+                </span>
+              </a>
+            </div>
+            <div>
+              <a class="tag is-link is-light is-medium mb-1" href="https://twitter.com/Queueueue_">
+                <span class="icon-text">
+                  <span class="icon">
+                    <i data-feather="twitter"></i>
+                  </span>
+                  <span>@Queueueue_</span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-three-quarters-desktop">
+      <div class="is-flex is-justify-content-center">
+        <h2 class="title is-2 mb-3 pt-2">Recent Posts</h2>
+      </div>
+      {{if .Posts}}
+      {{range .Posts}}
+      <div class="card mb-3">
+        <header class="card-header">
+          <p class="card-header-title">
+            {{.Title}}
+          </p>
+          <p class="card-header-icon">
+            Posted {{humanDate .Created}}
+            {{if (ne .Modified .Created)}}
+            <br>
+            Edited &nbsp;{{humanDate .Modified}}
+            {{end}}
+          </p>
+        </header>
+        <div class="card-content is-clipped readmore-card">
+          <div class="content">
+            {{.Body}}
+            <span class="readmore">
+              <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.ID}}">
+                Read Full Post
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
+      {{end}}
+      {{else}}
+      <div class="is-flex is-justify-content-center">
+        <p>There's nothing here!</p>
+      </div>
+      {{end}}
+    </div>
+  </div>
+</div>
+{{end}}

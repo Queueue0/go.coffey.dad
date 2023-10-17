@@ -1,0 +1,35 @@
+{{define "base"}}
+<!doctype html>
+<html lang='en'>
+
+<head>
+  <meta charset='utf-8'>
+  <title>{{template "title" .}} | coffey.dad</title>
+
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="/static/css/bulma.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/static/img/favicon.png" sizes="256x256" type="image/png">
+  {{template "scripts" .}}
+</head>
+
+<body>
+  <div class="columns is-flex-direction-column is-fullheight-100vh">
+    <div class="column is-narrow">
+      {{template "nav" .}}
+    </div>
+
+    <div class="column">
+      {{template "main" .}}
+    </div>
+
+    <footer class="footer column is-narrow">
+      <div class="content has-text-centered">
+        <p>Powered by <a class="has-text-primary" href='https://golang.org/'>Go</a></p>
+      </div>
+    </footer>
+</body>
+<script src="/static/js/main.js"></script>
+
+</html>
+{{end}}
