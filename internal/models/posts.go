@@ -19,6 +19,12 @@ type Post struct {
 	Modified time.Time
 }
 
+type Draft struct {
+	ID    int
+	Title string
+	body  template.HTML
+}
+
 type PostModel struct {
 	DB *sql.DB
 }
@@ -50,6 +56,44 @@ func (m *PostModel) Insert(title, body string) (int, error) {
 	}
 
 	return int(id), nil
+}
+
+func (m *PostModel) InsertAsDraft(title, body string) (int, error) {
+	stmt := "INSERT INTO draft (title, body) VALUES (?, ?)"
+
+	result, err := m.DB.Exec(stmt, title, body)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+func (m *PostModel) PublishDraft(id int, title, body string) (int, error) {
+	stmt := "INSERT INTO post (title, body) VALUES (?, ?)"
+
+	result, err := m.DB.Exec(stmt, title, body)
+	if err != nil {
+		return 0, err
+	}
+
+	postId, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	stmt = "DELETE FROM draft WHERE id=?"
+	result, err = m.DB.Exec(stmt, id)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(postId), nil
 }
 
 func (m *PostModel) Update(id int, title, body string) error {
