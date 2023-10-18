@@ -67,6 +67,19 @@ func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "post_list.tmpl", data)
 }
 
+func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
+	drafts, err := app.posts.AllDrafts()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Drafts = drafts
+
+	app.render(w, r, http.StatusOK, "draft_list.tmpl", data)
+}
+
 type postForm struct {
 	Title string
 	Body  string
@@ -94,6 +107,12 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		Body:  r.PostForm.Get("body"),
 	}
 
+	asDraft, err := strconv.ParseBool(r.PostForm.Get("asDraft"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
 	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
@@ -106,13 +125,22 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := app.posts.Insert(form.Title, form.Body)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
+	if !asDraft {
+		id, err := app.posts.Insert(form.Title, form.Body)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
+	} else {
+		_, err := app.posts.InsertAsDraft(form.Title, form.Body)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
 }
 
 func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
@@ -186,6 +214,94 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
+}
+
+func (app *application) editDraft(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil {
+		app.notFound(w)
+		return
+	}
+
+	draft, err := app.posts.GetDraft(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	form := postForm{
+		Title: draft.Title,
+		Body:  string(draft.Body),
+	}
+
+	data := app.newTemplateData(r)
+	data.Draft = draft
+	data.Form = form
+	data.NewPost = false
+
+	app.render(w, r, http.StatusOK, "edit_draft.tmpl", data)
+}
+
+func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil {
+		app.notFound(w)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form := postForm{
+		Title: r.PostForm.Get("title"),
+		Body:  r.PostForm.Get("body"),
+	}
+
+	asDraft, err := strconv.ParseBool(r.PostForm.Get("asDraft"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
+	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "edit_draft.tmpl", data)
+		return
+	}
+
+	if asDraft {
+		err = app.posts.UpdateDraft(id, form.Title, form.Body)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
+	} else {
+		postId, err := app.posts.PublishDraft(id, form.Title, form.Body)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", postId), http.StatusSeeOther)
+	}
 }
 
 type loginForm struct {

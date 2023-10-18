@@ -40,6 +40,9 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/upload", protected.ThenFunc(app.upload))
 	router.Handler(http.MethodPost, "/upload", protected.ThenFunc(app.uploadPost))
 	router.Handler(http.MethodGet, "/upload/choose-image", protected.ThenFunc(app.imagePicker))
+	router.Handler(http.MethodGet, "/blog/drafts", protected.ThenFunc(app.draftList))
+	router.Handler(http.MethodGet, "/blog/drafts/edit/:id", protected.ThenFunc(app.editDraft))
+	router.Handler(http.MethodPost, "/blog/drafts/edit/:id", protected.ThenFunc(app.editDraftSubmit))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 

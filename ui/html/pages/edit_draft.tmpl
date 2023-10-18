@@ -1,4 +1,4 @@
-{{define "title"}}{{if .NewPost}}New Post{{else}}Edit Post{{end}}{{end}}
+{{define "title"}}Edit Draft{{end}}
 
 {{define "scripts"}}
 <script src="/static/js/showdown.min.js"></script>
@@ -7,7 +7,7 @@
 
 {{define "main"}}
 <div class="container is-max-desktop">
-  <form id="addEditForm" method="post" action="{{if .NewPost}}/blog/new{{else}}/blog/edit/{{.Post.ID}}{{end}}">
+  <form id="addEditForm" method="post" action="/blog/drafts/edit/{{.Draft.ID}}">
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
     <input type='hidden' name='asDraft' id='asDraft' value='false'>
     <div class="field">
@@ -31,15 +31,13 @@
         <div class="level-item">
           <div class="field is-grouped">
             <div class="control">
-              <button type="submit" class="button is-link">Submit</button>
+              <button type="submit" class="button is-link">Publish</button>
             </div>
-            {{if .NewPost}}
-              <div class="control">
-                <button type="button" id="asDraftButton" class="button is-link is-light">Save As Draft</button>
-              </div>
-            {{end}}
             <div class="control">
-              <a href="/blog" class="button is-link is-light">Cancel</a>
+              <button type="button" id="asDraftButton" class="button is-link is-light">Save</button>
+            </div>
+            <div class="control">
+              <a href="/blog/drafts" class="button is-link is-light">Cancel</a>
             </div>
           </div>
         </div>

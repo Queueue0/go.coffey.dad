@@ -14,6 +14,8 @@ type templateData struct {
 	CSRFToken       string
 	Post            models.Post
 	Posts           []models.Post
+	Draft           models.Draft
+	Drafts          []models.Draft
 	NewPost         bool
 	Form            any
 	IsAuthenticated bool

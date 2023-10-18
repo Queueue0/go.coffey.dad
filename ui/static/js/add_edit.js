@@ -10,6 +10,12 @@ document.addEventListener("DOMContentLoaded", () => {
   update_preview();
   document.getElementById("bodybox").addEventListener("input", update_preview);
   document.getElementById("insert-image").addEventListener("click", () => {window.open('/upload/choose-image')});
+  document.getElementById("asDraftButton").addEventListener("click", () => {
+    const form = document.getElementById("addEditForm");
+    const asDraft = document.getElementById("asDraft");
+    asDraft.value = "true";
+    form.submit();
+  });
 });
 
 function handlePopupResult(result) {

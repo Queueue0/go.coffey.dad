@@ -1,4 +1,4 @@
-{{define "title"}}Blog{{end}}
+{{define "title"}}Drafts{{end}}
 
 {{define "scripts"}}{{end}}
 
@@ -8,12 +8,8 @@
     <div class="level mb-3 ml-3 is-mobile">
       <div class="level-left">
         <div class="level-item">
-          <a class="button is-link is-light" href="/blog/new">
-            <i class="pr-1" data-feather="plus-square"></i>Add New Post</a>
-        </div>
-        <div class="level-item">
-          <a class="button is-link is-light" href="/blog/drafts">
-            <i class="pr-1" data-feather="file-text"></i>Drafts</a>
+          <a class="button is-link is-light" href="/blog">
+            <i class="pr-1" data-feather="arrow-left-circle"></i>Back to Posts</a>
         </div>
         <div class="level-item">
           <a class="button is-link is-light" href="/upload">
@@ -22,26 +18,19 @@
       </div>
     </div>
   {{end}}
-  {{range .Posts}}
+  {{range .Drafts}}
   <div class="card mb-3 mx-3">
     <header class="card-header">
       <p class="card-header-title">
         {{.Title}}
-      </p>
-      <p class="card-header-icon">
-        Posted {{humanDate .Created}}
-        {{if (ne .Modified .Created)}}
-        <br>
-        Edited &nbsp;{{humanDate .Modified}}
-        {{end}}
       </p>
     </header>
     <div class="card-content is-clipped readmore-card">
       <div class="content">
         {{.Body}}
         <span class="readmore">
-          <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.ID}}">
-            Read Full Post
+          <a class="has-text-grey-light has-text-weight-medium" href="/blog/drafts/edit/{{.ID}}">
+            Edit Draft
           </a>
         </span>
       </div>
