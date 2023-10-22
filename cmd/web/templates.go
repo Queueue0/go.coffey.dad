@@ -18,6 +18,7 @@ type templateData struct {
 	Drafts          []models.Draft
 	NewPost         bool
 	Form            any
+	Flash           string
 	IsAuthenticated bool
 	FileNames       []string
 }

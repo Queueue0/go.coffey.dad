@@ -20,6 +20,15 @@
     </div>
 
     <div class="column">
+      {{with .Flash}}
+        <div class="container">
+          <div class="message is-success mx-6 mb-4">
+            <div class="message-body">
+              {{.}}
+            </div>
+          </div>
+        </div>
+      {{end}}
       {{template "main" .}}
     </div>
 

@@ -48,8 +48,10 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 
 	post.ParseBody()
 
+	flash := app.sessionManager.PopString(r.Context(), "flash")
 	data := app.newTemplateData(r)
 	data.Post = post
+	data.Flash = flash
 
 	app.render(w, r, http.StatusOK, "post_view.tmpl", data)
 }
@@ -61,8 +63,10 @@ func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	flash := app.sessionManager.PopString(r.Context(), "flash")
 	data := app.newTemplateData(r)
 	data.Posts = posts
+	data.Flash = flash
 
 	app.render(w, r, http.StatusOK, "post_list.tmpl", data)
 }
@@ -74,8 +78,10 @@ func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	flash := app.sessionManager.PopString(r.Context(), "flash")
 	data := app.newTemplateData(r)
 	data.Drafts = drafts
+	data.Flash = flash
 
 	app.render(w, r, http.StatusOK, "draft_list.tmpl", data)
 }
@@ -131,6 +137,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, r, err)
 			return
 		}
+		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
 		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
 	} else {
 		_, err := app.posts.InsertAsDraft(form.Title, form.Body)
@@ -138,6 +145,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, r, err)
 			return
 		}
+		app.sessionManager.Put(r.Context(), "flash", "Draft saved successfully!")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	}
 
@@ -300,6 +308,7 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
+		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
 		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", postId), http.StatusSeeOther)
 	}
 }
@@ -390,7 +399,11 @@ func (app *application) uploadPost(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		app.serverError(w, r, err)
+		form.AddNonFieldError("Error Uploading Image")
+
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 		return
 	}
 
@@ -399,7 +412,11 @@ func (app *application) uploadPost(w http.ResponseWriter, r *http.Request) {
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
 		if err != nil {
-			app.serverError(w, r, err)
+			form.AddNonFieldError("Error Uploading Image")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 			return
 		}
 
@@ -408,25 +425,41 @@ func (app *application) uploadPost(w http.ResponseWriter, r *http.Request) {
 		buff := make([]byte, 512)
 		_, err = file.Read(buff)
 		if err != nil {
-			app.serverError(w, r, err)
+			form.AddNonFieldError("Error Uploading Image")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 			return
 		}
 
 		_, err = file.Seek(0, io.SeekStart)
 		if err != nil {
-			app.serverError(w, r, err)
+			form.AddNonFieldError("Error Uploading Image")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 			return
 		}
 
 		err = os.MkdirAll("./uploads", os.ModePerm)
 		if err != nil {
-			app.serverError(w, r, err)
+			form.AddNonFieldError("Error Uploading Image")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 			return
 		}
 
 		f, err := os.Create(fmt.Sprintf("./uploads/%s", fileHeader.Filename))
 		if err != nil {
-			app.serverError(w, r, err)
+			form.AddNonFieldError("Error Uploading Image")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 			return
 		}
 
@@ -434,13 +467,18 @@ func (app *application) uploadPost(w http.ResponseWriter, r *http.Request) {
 
 		_, err = io.Copy(f, file)
 		if err != nil {
-			app.serverError(w, r, err)
+			form.AddNonFieldError("Error Uploading Image")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusInternalServerError, "upload.tmpl", data)
 			return
 		}
 	}
 
 	data := app.newTemplateData(r)
 	data.Form = form
+	data.Flash = "Image uploaded successfully!"
 	app.render(w, r, http.StatusOK, "upload.tmpl", data)
 }
 
