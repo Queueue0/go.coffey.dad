@@ -63,6 +63,13 @@ func main() {
 
 	tlsConfig := &tls.Config{
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+		GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+			cert, err := tls.LoadX509KeyPair(*tlsCert, *tlsKey)
+			if err != nil {
+				return nil, err
+			}
+			return &cert, nil
+		},
 	}
 
 	srv := &http.Server{
@@ -77,7 +84,7 @@ func main() {
 
 	logger.Info("starting server", "addr", *addr)
 
-	err = srv.ListenAndServeTLS(*tlsCert, *tlsKey)
+	err = srv.ListenAndServeTLS("", "")
 	logger.Error(err.Error())
 	os.Exit(1)
 }
