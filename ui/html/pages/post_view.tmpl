@@ -1,4 +1,12 @@
 {{define "title"}}{{.Post.Title}}{{end}}
+
+{{define "metadata"}}
+<meta property="og:title" content="{{.Post.Title}}"/>
+<meta property="og:type" content="article"/>
+<meta property="og:image" content="https://coffey.dad/static/img/favicon.png"/>
+<meta property="og:url" content="https://coffey.dad/blog/post/{{.Post.ID}}"/>
+{{end}}
+
 {{define "scripts"}}
 <link rel="stylesheet" href="/static/css/post.css">
 {{end}}
