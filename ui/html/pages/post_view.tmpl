@@ -13,35 +13,40 @@
 
 {{define "main"}}
 <div>
-  <a class="button ml-5 is-link is-light" href="/blog"><i class="pr-1" data-feather="arrow-left-circle"></i> Back to all
+  <a class="button ml-5 is-info is-soft" href="/blog"><i class="pr-1" data-feather="arrow-left-circle"></i> Back to all
     posts</a>
   <div class="container px-5">
     <div class="columns">
-      {{with .Post}}
-        <div class="column is-11-desktop is-four-fifths-tablet">
-          <h1 class="title is-1 is-italic">{{.Title}}</h1>
-          <p class="is-italic has-text-weight-light">
-            Posted {{humanDate .Created}}
-            {{if (ne .Modified .Created)}}
-            <br>
-            Edited &nbsp;{{humanDate .Modified}}
+      <div class="column is-two-thirds-desktop is-offset-2-desktop is-10-tablet is-offset-1-tablet">
+        <div class="columns">
+          <div class="column">
+            <h1 class="title is-1 is-italic">{{.Post.Title}}</h1>
+          </div>
+          <div class="column is-narrow">
+            {{if .IsAuthenticated}}
+              <a class="button" href="/blog/edit/{{.Post.ID}}">Edit Post</a>
             {{end}}
-          </p>
+          </div>
         </div>
-      {{end}}
-      <div class="column">
-        {{if .IsAuthenticated}}
-          <a class="button" href="/blog/edit/{{.Post.ID}}">Edit
-          Post</a>
-        {{end}}
+        <p class="is-italic has-text-weight-light">
+          Posted {{humanDate .Post.Created}}
+          {{if (ne .Post.Modified .Post.Created)}}
+          <br>
+          Edited &nbsp;{{humanDate .Post.Modified}}
+          {{end}}
+        </p>
+        <hr>
       </div>
     </div>
-    <hr>
-    {{with .Post}}
-      <div class="content pb-6">
-        {{.Body}}
+    <div class="columns">
+      {{with .Post}}
+      <div class="column is-two-thirds-desktop is-offset-2-desktop is-10-tablet is-offset-1-tablet">
+        <div class="content pb-6">
+          {{.Body}}
+        </div>
       </div>
-    {{end}}
+      {{end}}
+    </div>
   </div>
 </div>
 {{end}}
