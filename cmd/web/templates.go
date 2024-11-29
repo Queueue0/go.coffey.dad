@@ -24,7 +24,16 @@ type templateData struct {
 }
 
 func humanDate(t time.Time) string {
-	return t.Format("Jan 02, 2006 at 3:04 PM")
+	l, err := time.LoadLocation("America/New_York")
+
+	var final string
+	if err != nil {
+		final = t.Format("Jan 02, 2006 at 3:04 PM")
+	} else {
+		final = t.In(l).Format("Jan 02, 2006 at 3:04 PM")
+	}
+
+	return final
 }
 
 var functions = template.FuncMap{

@@ -2,3 +2,4 @@ web
 !cmd/web
 tls
 uploads
+.env

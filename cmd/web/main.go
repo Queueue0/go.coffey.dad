@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"database/sql"
-	"flag"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 type application struct {
@@ -26,15 +26,20 @@ type application struct {
 }
 
 func main() {
-	addr := flag.String("addr", ":8000", "HTTP network address")
-	dsn := flag.String("dsn", "web:pass@/coffeydad_devel?parseTime=true", "MySQL data source name")
-	tlsCert := flag.String("tlsc", "./tls/cert.pem", "The TLS Certificate")
-	tlsKey := flag.String("tlsk", "./tls/key.pem", "The TLS Key")
-	flag.Parse()
-
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	db, err := openDB(*dsn)
+	err := godotenv.Load()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	addr := os.Getenv("ADDR")
+	dsn := os.Getenv("DSN")
+	tlsCert := os.Getenv("TLSC")
+	tlsKey := os.Getenv("TLSK")
+
+	db, err := openDB(dsn)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -64,7 +69,7 @@ func main() {
 	tlsConfig := &tls.Config{
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 		GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
-			cert, err := tls.LoadX509KeyPair(*tlsCert, *tlsKey)
+			cert, err := tls.LoadX509KeyPair(tlsCert, tlsKey)
 			if err != nil {
 				return nil, err
 			}
@@ -73,7 +78,7 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:         *addr,
+		Addr:         addr,
 		Handler:      app.routes(),
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		TLSConfig:    tlsConfig,
@@ -82,7 +87,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	logger.Info("starting server", "addr", *addr)
+	logger.Info("starting server", "addr", addr)
 
 	err = srv.ListenAndServeTLS("", "")
 	logger.Error(err.Error())
