@@ -17,6 +17,7 @@ type Post struct {
 	Body     template.HTML
 	Created  time.Time
 	Modified time.Time
+	IsDraft  bool
 }
 
 type Draft struct {
@@ -55,10 +56,10 @@ func (d *Draft) ParseBody() {
 	d.Body = template.HTML(markdown.Render(doc, renderer))
 }
 
-func (m *PostModel) Insert(title, body string) (int, error) {
-	stmt := "INSERT INTO post (title, body) VALUES (?, ?)"
+func (m *PostModel) Insert(p Post) (int, error) {
+	stmt := "INSERT INTO post (title, body, is_draft, created, modified) VALUES (?, ?, ?, ?, ?)"
 
-	result, err := m.DB.Exec(stmt, title, body)
+	result, err := m.DB.Exec(stmt, p.Title, p.Body, p.IsDraft, p.Created, p.Modified)
 	if err != nil {
 		return 0, err
 	}
@@ -71,10 +72,26 @@ func (m *PostModel) Insert(title, body string) (int, error) {
 	return int(id), nil
 }
 
-func (m *PostModel) Update(id int, title, body string) error {
-	stmt := "UPDATE post SET title=?, body=? WHERE id=?"
+func (m *PostModel) Update(p Post) error {
+	stmt := "UPDATE post SET title=?, body=?, is_draft=?, created=?, modified=? WHERE id=?"
 
-	result, err := m.DB.Exec(stmt, title, body, id)
+	result, err := m.DB.Exec(stmt, p.Title, p.Body, p.IsDraft, p.Created, p.Modified, p.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PostModel) TogglePublishStatus(id int) error {
+	stmt := "UPDATE post SET is_draft = NOT is_draft WHERE id = ?"
+
+	result, err := m.DB.Exec(stmt, id)
 	if err != nil {
 		return err
 	}
@@ -90,10 +107,10 @@ func (m *PostModel) Update(id int, title, body string) error {
 func (m *PostModel) Get(id int) (Post, error) {
 	var p Post
 
-	stmt := `SELECT id, title, body, created, modified FROM post
+	stmt := `SELECT id, title, body, created, modified, is_draft FROM post
 	WHERE id=?`
 
-	err := m.DB.QueryRow(stmt, id).Scan(&p.ID, &p.Title, &p.Body, &p.Created, &p.Modified)
+	err := m.DB.QueryRow(stmt, id).Scan(&p.ID, &p.Title, &p.Body, &p.Created, &p.Modified, &p.IsDraft)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Post{}, ErrNoRecord
@@ -107,7 +124,7 @@ func (m *PostModel) Get(id int) (Post, error) {
 
 func (m *PostModel) Latest(n int) ([]Post, error) {
 	stmt := `SELECT id, title, body, created, modified FROM post
-	ORDER BY id DESC LIMIT ?`
+	WHERE is_draft = FALSE ORDER BY created DESC LIMIT ?`
 
 	rows, err := m.DB.Query(stmt, n)
 	if err != nil {
@@ -140,7 +157,7 @@ func (m *PostModel) Latest(n int) ([]Post, error) {
 
 func (m *PostModel) All() ([]Post, error) {
 	stmt := `SELECT id, title, body, created, modified FROM post
-	ORDER BY id DESC`
+	WHERE is_draft = FALSE ORDER BY created DESC`
 
 	rows, err := m.DB.Query(stmt)
 	if err != nil {
@@ -172,9 +189,9 @@ func (m *PostModel) All() ([]Post, error) {
 }
 
 func (m *PostModel) InsertAsDraft(title, body string) (int, error) {
-	stmt := "INSERT INTO draft (title, body) VALUES (?, ?)"
+	stmt := "INSERT INTO post (title, body, is_draft) VALUES (?, ?, ?)"
 
-	result, err := m.DB.Exec(stmt, title, body)
+	result, err := m.DB.Exec(stmt, title, body, true)
 	if err != nil {
 		return 0, err
 	}
@@ -187,21 +204,15 @@ func (m *PostModel) InsertAsDraft(title, body string) (int, error) {
 	return int(id), nil
 }
 
-func (m *PostModel) PublishDraft(id int, title, body string) (int, error) {
-	stmt := "INSERT INTO post (title, body) VALUES (?, ?)"
+func (m *PostModel) PublishDraft(id int) (int, error) {
+	stmt := "UPDATE post SET is_draft = TRUE WHERE id = ?"
 
-	result, err := m.DB.Exec(stmt, title, body)
+	result, err := m.DB.Exec(stmt, id)
 	if err != nil {
 		return 0, err
 	}
 
 	postId, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	stmt = "DELETE FROM draft WHERE id=?"
-	result, err = m.DB.Exec(stmt, id)
 	if err != nil {
 		return 0, err
 	}
@@ -244,8 +255,8 @@ func (m *PostModel) GetDraft(id int) (Draft, error) {
 }
 
 func (m *PostModel) AllDrafts() ([]Draft, error) {
-	stmt := `SELECT id, title, body FROM draft
-	ORDER BY id DESC`
+	stmt := `SELECT id, title, body FROM post
+	WHERE is_draft = TRUE ORDER BY id DESC`
 
 	rows, err := m.DB.Query(stmt)
 	if err != nil {

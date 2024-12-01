@@ -33,11 +33,9 @@
             <div class="control">
               <button type="submit" class="button is-success is-soft">Submit</button>
             </div>
-            {{if .NewPost}}
               <div class="control">
-                <button type="button" id="asDraftButton" class="button is-info is-soft">Save As Draft</button>
+                <button type="button" id="asDraftButton" class="button is-info is-soft">{{if .NewPost}}Save As Draft{{else}}Unpublish{{end}}</button>
               </div>
-            {{end}}
             <div class="control">
               <a href="/blog" class="button is-info is-soft">Cancel</a>
             </div>

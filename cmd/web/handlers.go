@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"coffey.dad/internal/models"
 	"coffey.dad/internal/validator"
@@ -32,17 +34,22 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return
 	}
 
 	post, err := app.posts.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}
+		return
+	}
+
+	if post.IsDraft {
+		app.notFound(w, r)
 		return
 	}
 
@@ -131,24 +138,27 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	now := time.Now()
+	id, err := app.posts.Insert(models.Post{
+		Title: form.Title,
+		Body: template.HTML(form.Body),
+		IsDraft: asDraft,
+		Created: now,
+		Modified: now,
+	})
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	if !asDraft {
-		id, err := app.posts.Insert(form.Title, form.Body)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
 		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
 		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
 	} else {
-		_, err := app.posts.InsertAsDraft(form.Title, form.Body)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
 		app.sessionManager.Put(r.Context(), "flash", "Draft saved successfully!")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	}
-
 }
 
 func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
@@ -156,14 +166,14 @@ func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return
 	}
 
 	post, err := app.posts.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}
@@ -188,7 +198,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return
 	}
 
@@ -203,6 +213,12 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		Body:  r.PostForm.Get("body"),
 	}
 
+	asDraft, err := strconv.ParseBool(r.PostForm.Get("asDraft"))
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
 	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
@@ -215,13 +231,28 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.posts.Update(id, form.Title, form.Body)
+	p, err := app.posts.Get(id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
+	p.Title = form.Title
+	p.Body = template.HTML(form.Body)
+	p.IsDraft = asDraft
+	p.Modified = time.Now()
+
+	err = app.posts.Update(p)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	if !asDraft {
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
+	}
 }
 
 func (app *application) editDraft(w http.ResponseWriter, r *http.Request) {
@@ -229,14 +260,14 @@ func (app *application) editDraft(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return
 	}
 
-	draft, err := app.posts.GetDraft(id)
+	draft, err := app.posts.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}
@@ -249,7 +280,7 @@ func (app *application) editDraft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := app.newTemplateData(r)
-	data.Draft = draft
+	data.Post = draft
 	data.Form = form
 	data.NewPost = false
 
@@ -261,7 +292,7 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return
 	}
 
@@ -293,23 +324,27 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if asDraft {
-		err = app.posts.UpdateDraft(id, form.Title, form.Body)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
+	p, err := app.posts.Get(id)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
+	p.Title = form.Title
+	p.Body = template.HTML(form.Body)
+	p.IsDraft = asDraft
+
+	if !p.IsDraft {
+		p.Created = time.Now()
+		p.Modified = p.Created
+	}
+	err = app.posts.Update(p)
+
+	if asDraft {
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	} else {
-		postId, err := app.posts.PublishDraft(id, form.Title, form.Body)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-
 		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", postId), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
 	}
 }
 

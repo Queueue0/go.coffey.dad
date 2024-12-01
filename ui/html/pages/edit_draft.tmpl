@@ -7,7 +7,7 @@
 
 {{define "main"}}
 <div class="container is-max-desktop">
-  <form id="addEditForm" method="post" action="/blog/drafts/edit/{{.Draft.ID}}">
+  <form id="addEditForm" method="post" action="/blog/drafts/edit/{{.Post.ID}}">
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
     <input type='hidden' name='asDraft' id='asDraft' value='false'>
     <div class="field">
