@@ -1,0 +1,2 @@
+ALTER TABLE post ADD url VARCHAR(200) NOT NULL DEFAULT "";
+UPDATE post SET url = title;

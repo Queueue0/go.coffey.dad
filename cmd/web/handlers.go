@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -30,22 +31,32 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) postView(w http.ResponseWriter, r *http.Request) {
+	var post models.Post
 	params := httprouter.ParamsFromContext(r.Context())
+	idparam := params.ByName("id")
 
-	id, err := strconv.Atoi(params.ByName("id"))
+	id, err := strconv.Atoi(idparam)
 	if err != nil {
-		app.notFound(w, r)
-		return
-	}
-
-	post, err := app.posts.Get(id)
-	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w, r)
-		} else {
-			app.serverError(w, r, err)
+		url, err := url.PathUnescape(idparam)
+		post, err = app.posts.GetByURL(url)
+		if err != nil {
+			if errors.Is(err, models.ErrNoRecord) {
+				app.notFound(w, r)
+			} else {
+				app.serverError(w, r, err)
+			}
+			return
 		}
-		return
+	} else {
+		post, err = app.posts.Get(id)
+		if err != nil {
+			if errors.Is(err, models.ErrNoRecord) {
+				app.notFound(w, r)
+			} else {
+				app.serverError(w, r, err)
+			}
+			return
+		}
 	}
 
 	if post.IsDraft {
@@ -95,6 +106,7 @@ func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
 
 type postForm struct {
 	Title string
+	URL   string
 	Body  string
 	validator.Validator
 }
@@ -117,6 +129,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	form := postForm{
 		Title: r.PostForm.Get("title"),
+		URL: r.PostForm.Get("url"),
 		Body:  r.PostForm.Get("body"),
 	}
 
@@ -129,6 +142,8 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
 	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.URL), "url", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.URL, 200), "url", "This field cannot be longer than 200 characters")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -138,13 +153,20 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	form.URL, err = url.PathUnescape(form.URL)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	now := time.Now()
-	id, err := app.posts.Insert(models.Post{
-		Title: form.Title,
-		Body: template.HTML(form.Body),
-		IsDraft: asDraft,
-		Created: now,
+	_, err = app.posts.Insert(models.Post{
+		Title:    form.Title,
+		Body:     template.HTML(form.Body),
+		IsDraft:  asDraft,
+		Created:  now,
 		Modified: now,
+		URL: form.URL,
 	})
 
 	if err != nil {
@@ -152,12 +174,13 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !asDraft {
-		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
-	} else {
-		app.sessionManager.Put(r.Context(), "flash", "Draft saved successfully!")
+	if asDraft {
+		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
+	} else {
+		u := url.PathEscape(form.URL)
+		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", u), http.StatusSeeOther)
 	}
 }
 
@@ -182,6 +205,7 @@ func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
 
 	form := postForm{
 		Title: post.Title,
+		URL: post.URL,
 		Body:  string(post.Body),
 	}
 
@@ -210,6 +234,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	form := postForm{
 		Title: r.PostForm.Get("title"),
+		URL: r.PostForm.Get("url"),
 		Body:  r.PostForm.Get("body"),
 	}
 
@@ -222,6 +247,8 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
 	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.URL), "url", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.URL, 200), "url", "This field cannot be longer than 200 characters")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -237,9 +264,16 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	form.URL, err = url.PathUnescape(form.URL)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	p.Title = form.Title
 	p.Body = template.HTML(form.Body)
 	p.IsDraft = asDraft
+	p.URL = form.URL
 	p.Modified = time.Now()
 
 	err = app.posts.Update(p)
@@ -248,10 +282,13 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !asDraft {
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
-	} else {
+	if asDraft {
+		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
+	} else {
+		u := url.PathEscape(p.URL)
+		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", u), http.StatusSeeOther)
 	}
 }
 
@@ -304,6 +341,7 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 
 	form := postForm{
 		Title: r.PostForm.Get("title"),
+		URL: r.PostForm.Get("url"),
 		Body:  r.PostForm.Get("body"),
 	}
 
@@ -316,6 +354,8 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
 	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.URL), "url", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.URL, 200), "url", "This field cannot be longer than 200 characters")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -330,7 +370,14 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	form.URL, err = url.PathUnescape(form.URL)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	p.Title = form.Title
+	p.URL = form.URL
 	p.Body = template.HTML(form.Body)
 	p.IsDraft = asDraft
 
@@ -340,11 +387,17 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 	}
 	err = app.posts.Update(p)
 
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 	if asDraft {
+		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	} else {
+		u := url.PathEscape(p.URL)
 		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%d", id), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", u), http.StatusSeeOther)
 	}
 }
 

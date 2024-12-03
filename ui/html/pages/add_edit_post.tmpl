@@ -19,6 +19,14 @@
       </div>
     </div>
     <div class="field">
+      {{with .Form.FieldErrors.url}}
+      <label class="has-text-danger">{{.}}</label>
+      {{end}}
+      <div class="control">
+        <input class="input" type="text" name="url" placeholder="URL" value="{{.Form.URL}}">
+      </div>
+    </div>
+    <div class="field">
       {{with .Form.FieldErrors.body}}
       <label class="has-text-danger">{{.}}</label>
       {{end}}
