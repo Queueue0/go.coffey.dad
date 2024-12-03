@@ -3,3 +3,4 @@ web
 tls
 uploads
 .env
+deploy.sh
