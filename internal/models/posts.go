@@ -5,8 +5,10 @@ import (
 	"errors"
 	"html/template"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
@@ -63,6 +65,12 @@ func (m *PostModel) Insert(p Post) (int, error) {
 
 	result, err := m.DB.Exec(stmt, p.Title, p.Body, p.IsDraft, p.Created, p.Modified, p.URL)
 	if err != nil {
+		var mySQLError *mysql.MySQLError
+		if errors.As(err, &mySQLError) {
+			if mySQLError.Number == 1062 && strings.Contains(mySQLError.Message, "post_uc_url") {
+				return 0, ErrDuplicateUrl
+			}
+		}
 		return 0, err
 	}
 
@@ -79,6 +87,12 @@ func (m *PostModel) Update(p Post) error {
 
 	result, err := m.DB.Exec(stmt, p.Title, p.Body, p.IsDraft, p.URL, p.Created, p.Modified, p.ID)
 	if err != nil {
+		var mySQLError *mysql.MySQLError
+		if errors.As(err, &mySQLError) {
+			if mySQLError.Number == 1062 && strings.Contains(mySQLError.Message, "post_uc_url") {
+				return ErrDuplicateUrl
+			}
+		}
 		return err
 	}
 

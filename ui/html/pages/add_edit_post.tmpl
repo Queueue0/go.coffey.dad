@@ -18,10 +18,10 @@
         <input class="input" type="text" name="title" id="title" placeholder="Title" value="{{.Form.Title}}">
       </div>
     </div>
+    {{with .Form.FieldErrors.url}}
+    <label class="has-text-danger">{{.}}</label>
+    {{end}}
     <div class="field has-addons">
-      {{with .Form.FieldErrors.url}}
-      <label class="has-text-danger">{{.}}</label>
-      {{end}}
       <div class="control is-expanded">
         <input class="input" type="text" name="url" id="url" placeholder="URL" value="{{.Form.URL}}">
       </div>

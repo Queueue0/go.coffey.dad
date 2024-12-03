@@ -129,7 +129,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	form := postForm{
 		Title: r.PostForm.Get("title"),
-		URL: r.PostForm.Get("url"),
+		URL:   r.PostForm.Get("url"),
 		Body:  r.PostForm.Get("body"),
 	}
 
@@ -166,11 +166,19 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		IsDraft:  asDraft,
 		Created:  now,
 		Modified: now,
-		URL: form.URL,
+		URL:      form.URL,
 	})
 
 	if err != nil {
-		app.serverError(w, r, err)
+		if errors.Is(err, models.ErrDuplicateUrl) {
+			form.AddFieldError("url", "URL already exists")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "add_edit_post.tmpl", data)
+		} else {
+			app.serverError(w, r, err)
+		}
 		return
 	}
 
@@ -205,7 +213,7 @@ func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
 
 	form := postForm{
 		Title: post.Title,
-		URL: post.URL,
+		URL:   post.URL,
 		Body:  string(post.Body),
 	}
 
@@ -234,7 +242,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	form := postForm{
 		Title: r.PostForm.Get("title"),
-		URL: r.PostForm.Get("url"),
+		URL:   r.PostForm.Get("url"),
 		Body:  r.PostForm.Get("body"),
 	}
 
@@ -278,7 +286,15 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	err = app.posts.Update(p)
 	if err != nil {
-		app.serverError(w, r, err)
+		if errors.Is(err, models.ErrDuplicateUrl) {
+			form.AddFieldError("url", "URL already exists")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "add_edit_post.tmpl", data)
+		} else {
+			app.serverError(w, r, err)
+		}
 		return
 	}
 
@@ -341,7 +357,7 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 
 	form := postForm{
 		Title: r.PostForm.Get("title"),
-		URL: r.PostForm.Get("url"),
+		URL:   r.PostForm.Get("url"),
 		Body:  r.PostForm.Get("body"),
 	}
 
@@ -388,7 +404,15 @@ func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) 
 	err = app.posts.Update(p)
 
 	if err != nil {
-		app.serverError(w, r, err)
+		if errors.Is(err, models.ErrDuplicateUrl) {
+			form.AddFieldError("url", "URL already exists")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "add_edit_post.tmpl", data)
+		} else {
+			app.serverError(w, r, err)
+		}
 	}
 
 	if asDraft {
