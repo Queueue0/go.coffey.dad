@@ -15,15 +15,18 @@
       <label class="has-text-danger">{{.}}</label>
       {{end}}
       <div class="control">
-        <input class="input" type="text" name="title" placeholder="Title" value="{{.Form.Title}}">
+        <input class="input" type="text" name="title" id="title" placeholder="Title" value="{{.Form.Title}}">
       </div>
     </div>
-    <div class="field">
+    <div class="field has-addons">
       {{with .Form.FieldErrors.url}}
       <label class="has-text-danger">{{.}}</label>
       {{end}}
+      <div class="control is-expanded">
+        <input class="input" type="text" name="url" id="url" placeholder="URL" value="{{.Form.URL}}">
+      </div>
       <div class="control">
-        <input class="input" type="text" name="url" placeholder="URL" value="{{.Form.URL}}">
+        <button type="button" id="useTitleBtn" class="button is-info">Use Title</button>
       </div>
     </div>
     <div class="field">

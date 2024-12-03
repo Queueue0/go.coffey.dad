@@ -16,6 +16,17 @@ document.addEventListener("DOMContentLoaded", () => {
     asDraft.value = "true";
     form.submit();
   });
+  document.getElementById("useTitleBtn").addEventListener("click", () => {
+    const urlBox = document.getElementById("url");
+    const titleBox = document.getElementById("title");
+    let url = titleBox.value;
+    url = url.toLowerCase()
+    url = url.replaceAll(/[^0-9a-z ]/gi, '');
+    url = url.trim();
+    url = url.replaceAll(" ", "-");
+
+    urlBox.value = url;
+  });
 });
 
 function handlePopupResult(result) {
