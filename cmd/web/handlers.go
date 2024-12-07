@@ -278,11 +278,19 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	now := time.Now()
+	// If we are publishing a draft
+	if !asDraft && p.IsDraft {
+		// I should probably create a new column called "published", but this
+		// is fine for now
+		p.Created = now
+	}
+
 	p.Title = form.Title
 	p.Body = template.HTML(form.Body)
 	p.IsDraft = asDraft
 	p.URL = form.URL
-	p.Modified = time.Now()
+	p.Modified = now
 
 	err = app.posts.Update(p)
 	if err != nil {
@@ -296,123 +304,6 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, r, err)
 		}
 		return
-	}
-
-	if asDraft {
-		app.sessionManager.Put(r.Context(), "flash", "Saved")
-		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
-	} else {
-		u := url.PathEscape(p.URL)
-		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", u), http.StatusSeeOther)
-	}
-}
-
-func (app *application) editDraft(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil {
-		app.notFound(w, r)
-		return
-	}
-
-	draft, err := app.posts.Get(id)
-	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w, r)
-		} else {
-			app.serverError(w, r, err)
-		}
-		return
-	}
-
-	form := postForm{
-		Title: draft.Title,
-		Body:  string(draft.Body),
-	}
-
-	data := app.newTemplateData(r)
-	data.Post = draft
-	data.Form = form
-	data.NewPost = false
-
-	app.render(w, r, http.StatusOK, "edit_draft.tmpl", data)
-}
-
-func (app *application) editDraftSubmit(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil {
-		app.notFound(w, r)
-		return
-	}
-
-	err = r.ParseForm()
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	form := postForm{
-		Title: r.PostForm.Get("title"),
-		URL:   r.PostForm.Get("url"),
-		Body:  r.PostForm.Get("body"),
-	}
-
-	asDraft, err := strconv.ParseBool(r.PostForm.Get("asDraft"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
-	form.CheckField(validator.MaxChars(form.Title, 256), "title", "This field cannot be longer than 256 characters")
-	form.CheckField(validator.NotBlank(form.Body), "body", "This field cannot be blank")
-	form.CheckField(validator.NotBlank(form.URL), "url", "This field cannot be blank")
-	form.CheckField(validator.MaxChars(form.URL, 200), "url", "This field cannot be longer than 200 characters")
-
-	if !form.Valid() {
-		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, r, http.StatusUnprocessableEntity, "edit_draft.tmpl", data)
-		return
-	}
-
-	p, err := app.posts.Get(id)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	form.URL, err = url.PathUnescape(form.URL)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	p.Title = form.Title
-	p.URL = form.URL
-	p.Body = template.HTML(form.Body)
-	p.IsDraft = asDraft
-
-	if !p.IsDraft {
-		p.Created = time.Now()
-		p.Modified = p.Created
-	}
-	err = app.posts.Update(p)
-
-	if err != nil {
-		if errors.Is(err, models.ErrDuplicateUrl) {
-			form.AddFieldError("url", "URL already exists")
-
-			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, r, http.StatusUnprocessableEntity, "add_edit_post.tmpl", data)
-		} else {
-			app.serverError(w, r, err)
-		}
 	}
 
 	if asDraft {

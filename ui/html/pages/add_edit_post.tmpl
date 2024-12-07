@@ -42,10 +42,10 @@
         <div class="level-item">
           <div class="field is-grouped">
             <div class="control">
-              <button type="submit" class="button is-success is-soft">Submit</button>
+              <button type="submit" class="button is-success is-soft">{{if .Post.IsDraft}}Publish{{else}}Submit{{end}}</button>
             </div>
               <div class="control">
-                <button type="button" id="asDraftButton" class="button is-info is-soft">{{if .NewPost}}Save As Draft{{else}}Unpublish{{end}}</button>
+                <button type="button" id="asDraftButton" class="button is-info is-soft">{{if .Post.IsDraft}}Save{{else}}{{if .NewPost}}Save As Draft{{else}}Unpublish{{end}}{{end}}</button>
               </div>
             <div class="control">
               <a href="/blog" class="button is-info is-soft">Cancel</a>
