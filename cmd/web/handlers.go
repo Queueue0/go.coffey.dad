@@ -105,10 +105,11 @@ func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
 }
 
 type postForm struct {
-	Title string
-	URL   string
-	Body  string
-	validator.Validator
+	Title               string `form:"title"`
+	URL                 string `form:"url"`
+	Body                string `form:"body"`
+	IsDraft             bool   `form:"asDraft"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) newPost(w http.ResponseWriter, r *http.Request) {
@@ -127,13 +128,9 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form := postForm{
-		Title: r.PostForm.Get("title"),
-		URL:   r.PostForm.Get("url"),
-		Body:  r.PostForm.Get("body"),
-	}
+	var form postForm
 
-	asDraft, err := strconv.ParseBool(r.PostForm.Get("asDraft"))
+	err = app.formDecoder.Decode(&form, r.PostForm)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
@@ -163,7 +160,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 	_, err = app.posts.Insert(models.Post{
 		Title:    form.Title,
 		Body:     template.HTML(form.Body),
-		IsDraft:  asDraft,
+		IsDraft:  form.IsDraft,
 		Created:  now,
 		Modified: now,
 		URL:      form.URL,
@@ -182,7 +179,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if asDraft {
+	if form.IsDraft {
 		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	} else {
@@ -240,13 +237,9 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form := postForm{
-		Title: r.PostForm.Get("title"),
-		URL:   r.PostForm.Get("url"),
-		Body:  r.PostForm.Get("body"),
-	}
+	var form postForm
 
-	asDraft, err := strconv.ParseBool(r.PostForm.Get("asDraft"))
+	err = app.formDecoder.Decode(&form, r.PostForm)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
@@ -280,7 +273,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	// If we are publishing a draft
-	if !asDraft && p.IsDraft {
+	if !form.IsDraft && p.IsDraft {
 		// I should probably create a new column called "published", but this
 		// is fine for now
 		p.Created = now
@@ -288,7 +281,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 
 	p.Title = form.Title
 	p.Body = template.HTML(form.Body)
-	p.IsDraft = asDraft
+	p.IsDraft = form.IsDraft
 	p.URL = form.URL
 	p.Modified = now
 
@@ -306,7 +299,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if asDraft {
+	if form.IsDraft {
 		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	} else {

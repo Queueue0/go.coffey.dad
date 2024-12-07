@@ -13,6 +13,7 @@ import (
 
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
@@ -23,6 +24,7 @@ type application struct {
 	users          *models.UserModel
 	templateCache  map[string]*template.Template
 	sessionManager *scs.SessionManager
+	formDecoder    *form.Decoder
 }
 
 func main() {
@@ -53,6 +55,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	formDecoder := form.NewDecoder()
+
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
@@ -64,6 +68,7 @@ func main() {
 		users:          &models.UserModel{DB: db},
 		templateCache:  templateCache,
 		sessionManager: sessionManager,
+		formDecoder:    formDecoder,
 	}
 
 	tlsConfig := &tls.Config{

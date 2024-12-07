@@ -14,3 +14,5 @@ require (
 )
 
 require github.com/joho/godotenv v1.5.1
+
+require github.com/go-playground/form/v4 v4.2.1 // indirect
