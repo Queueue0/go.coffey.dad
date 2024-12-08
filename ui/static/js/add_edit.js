@@ -1,4 +1,31 @@
-update_preview = () => {
+let tag_id = 0;
+const add_tag = () => {
+  const tagBox = document.getElementById("tagBox");
+  let tagName = tagBox.value;
+  if (!tagName) {
+    return
+  }
+
+  
+}
+
+// Shamelessly stolen from StackOverflow
+const string_to_color = (str) => {
+  let hash = 0;
+  str.split('').forEach(char => {
+    hash = char.charCodeAt(0) + ((hash << 5) - hash);
+  })
+
+  let color = "#";
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += value.toString(16).padStart(2, '0');
+  }
+
+  return color
+}
+
+const update_preview = () => {
   const bodyBox = document.getElementById("bodybox");
   const previewBox = document.getElementById("preview");
   const converter = new showdown.Converter();
@@ -16,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
     asDraft.value = "true";
     form.submit();
   });
+
   document.getElementById("useTitleBtn").addEventListener("click", () => {
     const urlBox = document.getElementById("url");
     const titleBox = document.getElementById("title");
@@ -27,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     urlBox.value = url;
   });
+
+  document.getElementById("addTagBtn").addEventListener("click", add_tag);
 });
 
 function handlePopupResult(result) {
