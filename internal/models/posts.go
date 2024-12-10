@@ -25,12 +25,6 @@ type Post struct {
 	URL      string
 }
 
-type Tag struct {
-	ID    int
-	Name  string
-	Color string
-}
-
 type PostModel struct {
 	DB *sql.DB
 }
@@ -261,78 +255,4 @@ func (m *PostModel) AllDrafts() ([]Post, error) {
 	}
 
 	return drafts, nil
-}
-
-func (m *PostModel) InsertTag(t Tag) (int, error) {
-	stmt := "INSERT INTO tag (name, color) VALUES (?, ?)"
-
-	result, err := m.DB.Exec(stmt, t.Name, t.Color)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
-}
-
-func (m *PostModel) AllTagsForPost(postId int) ([]Tag, error) {
-	stmt := `SELECT t.id, t.name, t.color FROM tag t
-	INNER JOIN post_tag pt ON t.id = pt.tag_id
-	INNER JOIN post p ON p.id = pt.post_id
-	WHERE p.id = ?`
-
-	rows, err := m.DB.Query(stmt, postId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var tags []Tag
-	for rows.Next() {
-		var t Tag
-		err := rows.Scan(&t.ID, &t.Name, &t.Color)
-		if err != nil {
-			return nil, err
-		}
-
-		tags = append(tags, t)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tags, nil
-}
-
-func (m *PostModel) AllTags() ([]Tag, error) {
-	stmt := `SELECT id, name, color FROM tag`
-	rows, err := m.DB.Query(stmt)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var tags []Tag
-
-	for rows.Next() {
-		var t Tag
-		err := rows.Scan(&t.ID, &t.Name, &t.Color)
-		if err != nil {
-			return nil, err
-		}
-
-		tags = append(tags, t)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tags, nil
 }
