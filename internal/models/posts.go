@@ -18,16 +18,17 @@ type Post struct {
 	ID       int
 	Title    string
 	Body     template.HTML
+	Tags     []Tag
 	Created  time.Time
 	Modified time.Time
 	IsDraft  bool
 	URL      string
 }
 
-type Draft struct {
+type Tag struct {
 	ID    int
-	Title string
-	Body  template.HTML
+	Name  string
+	Color string
 }
 
 type PostModel struct {
@@ -45,19 +46,6 @@ func (p *Post) ParseBody() {
 	renderer := html.NewRenderer(opts)
 
 	p.Body = template.HTML(markdown.Render(doc, renderer))
-}
-
-func (d *Draft) ParseBody() {
-	body := []byte(d.Body)
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	pr := parser.NewWithExtensions(extensions)
-	doc := pr.Parse(body)
-
-	htmlFlags := html.CommonFlags
-	opts := html.RendererOptions{Flags: htmlFlags}
-	renderer := html.NewRenderer(opts)
-
-	d.Body = template.HTML(markdown.Render(doc, renderer))
 }
 
 func (m *PostModel) Insert(p Post) (int, error) {
@@ -226,22 +214,6 @@ func (m *PostModel) All() ([]Post, error) {
 	return posts, nil
 }
 
-func (m *PostModel) InsertAsDraft(title, body string) (int, error) {
-	stmt := "INSERT INTO post (title, body, is_draft) VALUES (?, ?, ?)"
-
-	result, err := m.DB.Exec(stmt, title, body, true)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
-}
-
 func (m *PostModel) PublishDraft(id int) (int, error) {
 	stmt := "UPDATE post SET is_draft = TRUE WHERE id = ?"
 
@@ -258,43 +230,9 @@ func (m *PostModel) PublishDraft(id int) (int, error) {
 	return int(postId), nil
 }
 
-func (m *PostModel) UpdateDraft(id int, title, body string) error {
-	stmt := "UPDATE draft SET title=?, body=? WHERE id=?"
-
-	result, err := m.DB.Exec(stmt, title, body, id)
-	if err != nil {
-		return err
-	}
-
-	_, err = result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *PostModel) GetDraft(id int) (Draft, error) {
-	var d Draft
-
-	stmt := `SELECT id, title, body FROM draft
-	WHERE id=?`
-
-	err := m.DB.QueryRow(stmt, id).Scan(&d.ID, &d.Title, &d.Body)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return Draft{}, ErrNoRecord
-		} else {
-			return Draft{}, err
-		}
-	}
-
-	return d, nil
-}
-
-func (m *PostModel) AllDrafts() ([]Draft, error) {
+func (m *PostModel) AllDrafts() ([]Post, error) {
 	stmt := `SELECT id, title, body FROM post
-	WHERE is_draft = TRUE ORDER BY id DESC`
+       WHERE is_draft = TRUE ORDER BY id DESC`
 
 	rows, err := m.DB.Query(stmt)
 	if err != nil {
@@ -303,10 +241,10 @@ func (m *PostModel) AllDrafts() ([]Draft, error) {
 
 	defer rows.Close()
 
-	var drafts []Draft
+	var drafts []Post
 
 	for rows.Next() {
-		var d Draft
+		var d Post
 
 		err := rows.Scan(&d.ID, &d.Title, &d.Body)
 		if err != nil {
@@ -323,4 +261,78 @@ func (m *PostModel) AllDrafts() ([]Draft, error) {
 	}
 
 	return drafts, nil
+}
+
+func (m *PostModel) InsertTag(t Tag) (int, error) {
+	stmt := "INSERT INTO tag (name, color) VALUES (?, ?)"
+
+	result, err := m.DB.Exec(stmt, t.Name, t.Color)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+func (m *PostModel) AllTagsForPost(postId int) ([]Tag, error) {
+	stmt := `SELECT t.id, t.name, t.color FROM tag t
+	INNER JOIN post_tag pt ON t.id = pt.tag_id
+	INNER JOIN post p ON p.id = pt.post_id
+	WHERE p.id = ?`
+
+	rows, err := m.DB.Query(stmt, postId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []Tag
+	for rows.Next() {
+		var t Tag
+		err := rows.Scan(&t.ID, &t.Name, &t.Color)
+		if err != nil {
+			return nil, err
+		}
+
+		tags = append(tags, t)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tags, nil
+}
+
+func (m *PostModel) AllTags() ([]Tag, error) {
+	stmt := `SELECT id, name, color FROM tag`
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var tags []Tag
+
+	for rows.Next() {
+		var t Tag
+		err := rows.Scan(&t.ID, &t.Name, &t.Color)
+		if err != nil {
+			return nil, err
+		}
+
+		tags = append(tags, t)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tags, nil
 }

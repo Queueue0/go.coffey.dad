@@ -1,4 +1,3 @@
-let tag_id = 0;
 const add_tag = () => {
   const tagBox = document.getElementById("tagBox");
   let tagName = tagBox.value;
@@ -6,7 +5,37 @@ const add_tag = () => {
     return
   }
 
-  
+  let color = string_to_color(tagName);
+  let textColor = get_text_color(color);
+
+  const control = document.createElement("div");
+  control.classList.add("control");
+
+  const tags = document.createElement("div");
+  tags.classList.add("tags");
+  tags.classList.add("has-addons");
+
+  control.appendChild(tags);
+
+  const tag = document.createElement("span");
+  tag.classList.add("tag");
+  tag.style.setProperty("background-color", color);
+  tag.style.setProperty("color", textColor);
+  tag.innerHTML = tagName;
+
+  const del = document.createElement("button");
+  del.type = "button";
+  del.classList.add("tag");
+  del.classList.add("is-delete");
+  del.addEventListener("click", (e) => {
+    e.target.parentNode.parentNode.remove();
+  });
+
+  tags.appendChild(tag);
+  tags.appendChild(del);
+
+  document.getElementById("tagZone").appendChild(control);
+  tagBox.value = "";
 }
 
 // Shamelessly stolen from StackOverflow
@@ -25,6 +54,60 @@ const string_to_color = (str) => {
   return color
 }
 
+const get_text_color = (c) => {
+  c = c.replace('#', '');
+  let r = Number("0x"+c.substring(0, 2));
+  let g = Number("0x"+c.substring(2, 4));
+  let b = Number("0x"+c.substring(4));
+
+  let convert = (v) => {
+    v /= 255;
+
+    v = v <= 0.04045 ? v/12.92 : ((v+0.055)/1.055)**2.4;
+
+    return v;
+  }
+
+  r = convert(r);
+  g = convert(g);
+  b = convert(b);
+
+  let L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return L > 0.179 ? "#000000" : "#ffffff";
+}
+
+const add_tag_fields = () => {
+  // This is fragile, I'll change it if it becomes a problem
+  const tags = document.querySelectorAll("span.tag");
+  
+  const form = document.getElementById("addEditForm");
+
+  tags.forEach((tag, i) => {
+    let name = tag.innerHTML;
+    let color = tag.style.getPropertyValue("background-color");
+    color = color.split("(")[1].split(")")[0];
+    parts = color.split(", ");
+    parts = parts.map((v) => {
+      v = parseInt(v).toString(16);
+      return (v.length==1) ? "0"+v : v;
+    });
+    color = "#"+parts.join("");
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "hidden";
+    nameInput.value = name;
+    nameInput.name = "Tag[" + i + "].Name";
+
+    const colorInput = document.createElement("input");
+    colorInput.type = "hidden";
+    colorInput.value = color;
+    colorInput.name = "Tag[" + i + "].Color";
+
+    form.appendChild(nameInput);
+    form.appendChild(colorInput);
+  });
+}
+
 const update_preview = () => {
   const bodyBox = document.getElementById("bodybox");
   const previewBox = document.getElementById("preview");
@@ -38,9 +121,18 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("bodybox").addEventListener("input", update_preview);
   document.getElementById("insert-image").addEventListener("click", () => {window.open('/upload/choose-image')});
   document.getElementById("asDraftButton").addEventListener("click", () => {
+    add_tag_fields();
+
     const form = document.getElementById("addEditForm");
     const asDraft = document.getElementById("asDraft");
     asDraft.value = "true";
+    form.submit();
+  });
+
+  document.getElementById("submitBtn").addEventListener("click", () => {
+    add_tag_fields();
+
+    const form = document.getElementById("addEditForm");
     form.submit();
   });
 

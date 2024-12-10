@@ -29,6 +29,23 @@
         <button type="button" id="useTitleBtn" class="button is-info">Use Title</button>
       </div>
     </div>
+    {{with .Form.FieldErrors.tags}}
+    <label class="has-text-danger">{{.}}</label>
+    {{end}}
+    <div class="field has-addons">
+      <div class="control">
+        <input type="text" class="input" id="tagBox" list="taglist">
+        <datalist id="taglist">
+          <option value="QPass">
+          <option value="Test">
+        </datalist>
+      </div>
+      <div class="control">
+        <button id="addTagBtn" type="button" class="button is-info">Add Tag</button>
+      </div>
+    </div>
+    <div class="field is-grouped is-grouped-multiline" id="tagZone">
+    </div>
     <div class="field">
       {{with .Form.FieldErrors.body}}
       <label class="has-text-danger">{{.}}</label>
@@ -42,7 +59,7 @@
         <div class="level-item">
           <div class="field is-grouped">
             <div class="control">
-              <button type="submit" class="button is-success is-soft">{{if .Post.IsDraft}}Publish{{else}}Submit{{end}}</button>
+              <button type="button" id="submitBtn" class="button is-success is-soft">{{if .Post.IsDraft}}Publish{{else}}Submit{{end}}</button>
             </div>
               <div class="control">
                 <button type="button" id="asDraftButton" class="button is-info is-soft">{{if .Post.IsDraft}}Save{{else}}{{if .NewPost}}Save As Draft{{else}}Unpublish{{end}}{{end}}</button>

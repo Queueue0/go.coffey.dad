@@ -98,7 +98,7 @@ func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
 
 	flash := app.sessionManager.PopString(r.Context(), "flash")
 	data := app.newTemplateData(r)
-	data.Drafts = drafts
+	data.Posts = drafts
 	data.Flash = flash
 
 	app.render(w, r, http.StatusOK, "draft_list.tmpl", data)

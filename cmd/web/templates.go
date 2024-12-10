@@ -14,8 +14,7 @@ type templateData struct {
 	CSRFToken       string
 	Post            models.Post
 	Posts           []models.Post
-	Draft           models.Draft
-	Drafts          []models.Draft
+	Tags            []models.Tag
 	NewPost         bool
 	Form            any
 	Flash           string
