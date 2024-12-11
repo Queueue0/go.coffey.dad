@@ -1,6 +1,8 @@
 {{define "title"}}Blog{{end}}
 
-{{define "scripts"}}{{end}}
+{{define "scripts"}}
+<script src="/static/js/pltags.js"></script>
+{{end}}
 
 {{define "main"}}
 <div class="container is-max-desktop">
@@ -22,31 +24,6 @@
       </div>
     </div>
   {{end}}
-  {{range .Posts}}
-  <div class="card mb-3 mx-3">
-    <header class="card-header">
-      <p class="card-header-title">
-        {{.Title}}
-      </p>
-      <p class="card-header-icon">
-        Posted {{humanDate .Created}}
-        {{if (ne .Modified .Created)}}
-        <br>
-        Edited &nbsp;{{humanDate .Modified}}
-        {{end}}
-      </p>
-    </header>
-    <div class="card-content is-clipped readmore-card">
-      <div class="content">
-        {{.Body}}
-        <span class="readmore">
-          <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.URL}}">
-            Read Full Post
-          </a>
-        </span>
-      </div>
-    </div>
-  </div>
-  {{end}}
+  {{template "postlist" .}}
 </div>
 {{end}}
