@@ -19,6 +19,7 @@
 
 {{define "scripts"}}
 <link rel="stylesheet" href="/static/css/post.css">
+<script src="/static/js/pltags.js"></script>
 {{end}}
 
 {{define "main"}}
@@ -45,6 +46,16 @@
           Edited &nbsp;{{humanDate .Post.Modified}}
           {{end}}
         </p>
+        <div class="field is-grouped is-grouped-multiline py-2">
+          <div class="control">
+            <p class="has-text-weight-light">Tags:</p>
+          </div>
+          {{range .Post.Tags}}
+          <div class="control">
+            <a href="/blog?filter={{pathEscape .Name}}" class="tag {{.Color}} post-tag">{{.Name}}</a>
+          </div>
+          {{end}}
+        </div>
         <hr>
       </div>
     </div>

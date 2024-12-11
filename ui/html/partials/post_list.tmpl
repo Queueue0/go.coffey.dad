@@ -31,9 +31,15 @@
       <div class="content">
         {{.Body}}
         <span class="readmore">
+          {{if .IsDraft}}
+          <a class="has-text-grey-light has-text-weight-medium" href="/blog/drafts/edit/{{.ID}}">
+            Edit Draft
+          </a>
+          {{else}}
           <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.URL}}">
             Read Full Post
           </a>
+          {{end}}
         </span>
       </div>
     </div>

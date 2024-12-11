@@ -249,7 +249,7 @@ func (m *PostModel) Latest(n int) ([]Post, error) {
 }
 
 func (m *PostModel) All() ([]Post, error) {
-	stmt := `SELECT id, title, body, created, modified, url FROM post
+	stmt := `SELECT id, title, body, created, modified, url, is_draft FROM post
 	WHERE is_draft = FALSE ORDER BY created DESC`
 
 	rows, err := m.DB.Query(stmt)
@@ -264,7 +264,7 @@ func (m *PostModel) All() ([]Post, error) {
 	for rows.Next() {
 		var p Post
 
-		err := rows.Scan(&p.ID, &p.Title, &p.Body, &p.Created, &p.Modified, &p.URL)
+		err := rows.Scan(&p.ID, &p.Title, &p.Body, &p.Created, &p.Modified, &p.URL, &p.IsDraft)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +307,7 @@ func (m *PostModel) PublishDraft(id int) (int, error) {
 }
 
 func (m *PostModel) AllDrafts() ([]Post, error) {
-	stmt := `SELECT id, title, body FROM post
+	stmt := `SELECT id, title, body, created, modified, url, is_draft FROM post
        WHERE is_draft = TRUE ORDER BY id DESC`
 
 	rows, err := m.DB.Query(stmt)
@@ -322,7 +322,7 @@ func (m *PostModel) AllDrafts() ([]Post, error) {
 	for rows.Next() {
 		var p Post
 
-		err := rows.Scan(&p.ID, &p.Title, &p.Body)
+		err := rows.Scan(&p.ID, &p.Title, &p.Body, &p.Created, &p.Modified, &p.URL, &p.IsDraft)
 		if err != nil {
 			return nil, err
 		}
