@@ -11,6 +11,26 @@ type Tag struct {
 	Color string
 }
 
+type TagList []Tag
+
+func (t *Tag) Equals(t2 Tag) bool {
+	return t.Name == t2.Name
+}
+
+func (t *Tag) LessThan(t2 Tag) bool {
+	return t.Name < t2.Name
+}
+
+func (ts TagList) Contains(t Tag) bool {
+	for _, tag := range ts {
+		if tag.Equals(t) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (m *PostModel) InsertTag(t Tag) (int, error) {
 	stmt := "INSERT INTO tag (name, color) VALUES (?, ?)"
 
@@ -40,13 +60,25 @@ func (m *PostModel) InsertTagIfNotExists(t Tag) (int, error) {
 	return et.ID, nil
 }
 
-func (m *PostModel) InsertPostTag(t Tag) (int, error) {
+func (m *PostModel) InsertPostTag(p Post, t Tag) (int, error) {
+	stmt := "INSERT INTO post_tag (post_id, tag_id) VALUES (?, ?)"
 
+	r, err := m.DB.Exec(stmt, p.ID, t.ID)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := r.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
 }
 
 func (m *PostModel) GetTagByName(name string) (Tag, error) {
 	stmt := "SELECT id, name, color FROM tag WHERE name = ?"
-	
+
 	var t Tag
 
 	err := m.DB.QueryRow(stmt, name).Scan(&t.ID, &t.Name, &t.Color)
@@ -61,10 +93,35 @@ func (m *PostModel) GetTagByName(name string) (Tag, error) {
 	return t, nil
 }
 
-func (m *PostModel) InsertPostTagIfNotExists(p Post, t Tag) (int, error) {
-	// stmt := "INSERT INTO post_tag (post_id, tag_id) VALUES (?, ?)"
+func (m *PostModel) InsertPostTagIfNotExists(p Post, t Tag) error {
+	exists, err := m.PostTagExists(p.ID, t.ID)
+	if err != nil {
+		return err
+	}
 
-	return 0, nil
+	if exists {
+		return nil
+	}
+
+	_, err = m.InsertPostTag(p, t)
+	// err will be nil if the insert succeeds, so no real need to do a check here
+	return err
+}
+
+func (m *PostModel) DeletePostTag(p, t int) (int, error) {
+	stmt := "DELETE FROM post_tag WHERE post_id = ? AND tag_id = ?"
+
+	r, err := m.DB.Exec(stmt, p, t)
+	if err != nil {
+		return 0, err
+	}
+
+	rows, err := r.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rows), nil
 }
 
 func (m *PostModel) PostTagExists(p, t int) (bool, error) {
@@ -83,7 +140,7 @@ func (m *PostModel) PostTagExists(p, t int) (bool, error) {
 	return true, nil
 }
 
-func (m *PostModel) AllTagsForPost(postId int) ([]Tag, error) {
+func (m *PostModel) AllTagsForPost(postId int) (TagList, error) {
 	stmt := `SELECT t.id, t.name, t.color FROM tag t
 	INNER JOIN post_tag pt ON t.id = pt.tag_id
 	INNER JOIN post p ON p.id = pt.post_id
@@ -113,7 +170,7 @@ func (m *PostModel) AllTagsForPost(postId int) ([]Tag, error) {
 	return tags, nil
 }
 
-func (m *PostModel) AllTags() ([]Tag, error) {
+func (m *PostModel) AllTags() (TagList, error) {
 	stmt := `SELECT id, name, color FROM tag`
 	rows, err := m.DB.Query(stmt)
 	if err != nil {

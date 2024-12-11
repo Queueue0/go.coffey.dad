@@ -107,6 +107,7 @@ func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
 type postForm struct {
 	Title               string `form:"title"`
 	URL                 string `form:"url"`
+	Tags                []models.Tag
 	Body                string `form:"body"`
 	IsDraft             bool   `form:"asDraft"`
 	validator.Validator `form:"-"`
@@ -117,6 +118,13 @@ func (app *application) newPost(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.NewPost = true
 	data.Form = form
+
+	tags, err := app.posts.AllTags()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	data.Tags = tags
 
 	app.render(w, r, http.StatusOK, "add_edit_post.tmpl", data)
 }
@@ -160,6 +168,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 	_, err = app.posts.Insert(models.Post{
 		Title:    form.Title,
 		Body:     template.HTML(form.Body),
+		Tags:     form.Tags,
 		IsDraft:  form.IsDraft,
 		Created:  now,
 		Modified: now,
@@ -211,6 +220,7 @@ func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
 	form := postForm{
 		Title: post.Title,
 		URL:   post.URL,
+		Tags:  post.Tags,
 		Body:  string(post.Body),
 	}
 
@@ -218,6 +228,13 @@ func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
 	data.Post = post
 	data.Form = form
 	data.NewPost = false
+
+	tags, err := app.posts.AllTags()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	data.Tags = tags
 
 	app.render(w, r, http.StatusOK, "add_edit_post.tmpl", data)
 }
@@ -283,6 +300,7 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 	p.Body = template.HTML(form.Body)
 	p.IsDraft = form.IsDraft
 	p.URL = form.URL
+	p.Tags = form.Tags
 	p.Modified = now
 
 	err = app.posts.Update(p)

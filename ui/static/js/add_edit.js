@@ -38,6 +38,24 @@ const add_tag = () => {
   tagBox.value = "";
 }
 
+const touch_tags = () => {
+  const tags = document.querySelectorAll("span.tag");
+
+  tags.forEach((tag) => {
+    let color = tag.className.split(' ')[1];
+    let textColor = get_text_color(color);
+    tag.style.setProperty("background-color", color);
+    tag.style.setProperty("color", textColor);
+  });
+
+  const delBtns = document.querySelectorAll("button.tag.is-delete");
+  delBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.target.parentNode.parentNode.remove();
+    });
+  });
+}
+
 // Shamelessly stolen from StackOverflow
 const string_to_color = (str) => {
   let hash = 0;
@@ -96,12 +114,12 @@ const add_tag_fields = () => {
     const nameInput = document.createElement("input");
     nameInput.type = "hidden";
     nameInput.value = name;
-    nameInput.name = "Tag[" + i + "].Name";
+    nameInput.name = "Tags[" + i + "].Name";
 
     const colorInput = document.createElement("input");
     colorInput.type = "hidden";
     colorInput.value = color;
-    colorInput.name = "Tag[" + i + "].Color";
+    colorInput.name = "Tags[" + i + "].Color";
 
     form.appendChild(nameInput);
     form.appendChild(colorInput);
@@ -118,6 +136,7 @@ const update_preview = () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   update_preview();
+  touch_tags();
   document.getElementById("bodybox").addEventListener("input", update_preview);
   document.getElementById("insert-image").addEventListener("click", () => {window.open('/upload/choose-image')});
   document.getElementById("asDraftButton").addEventListener("click", () => {

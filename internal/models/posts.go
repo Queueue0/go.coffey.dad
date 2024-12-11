@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/url"
 	"strings"
@@ -18,7 +19,7 @@ type Post struct {
 	ID       int
 	Title    string
 	Body     template.HTML
-	Tags     []Tag
+	Tags     TagList
 	Created  time.Time
 	Modified time.Time
 	IsDraft  bool
@@ -61,7 +62,13 @@ func (m *PostModel) Insert(p Post) (int, error) {
 		return 0, err
 	}
 
-	return int(id), nil
+	p.ID = int(id)
+	err = m.UpdateTags(p)
+	if err != nil {
+		return p.ID, err
+	}
+
+	return p.ID, nil
 }
 
 func (m *PostModel) Update(p Post) error {
@@ -81,6 +88,53 @@ func (m *PostModel) Update(p Post) error {
 	_, err = result.RowsAffected()
 	if err != nil {
 		return err
+	}
+
+	err = m.UpdateTags(p)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PostModel) UpdateTags(p Post) error {
+	oldTags, err := m.AllTagsForPost(p.ID)
+	if err != nil {
+		return err
+	}
+
+	// (t)o (b)e (r)emoved
+	var tbr TagList
+	for _, t := range oldTags {
+		if !p.Tags.Contains(t) {
+			tbr = append(tbr, t)
+		}
+	}
+
+	for _, t := range tbr {
+		r, err := m.DeletePostTag(p.ID, t.ID)
+		if err != nil {
+			return err
+		}
+
+		if r != 1 {
+			return errors.New(fmt.Sprintf("Unexpected number of deleted rows: %d", r))
+		}
+	}
+
+	for _, t := range p.Tags {
+		tid, err := m.InsertTagIfNotExists(t)
+		if err != nil {
+			return err
+		}
+
+		t.ID = tid
+
+		err = m.InsertPostTagIfNotExists(p, t)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -117,6 +171,13 @@ func (m *PostModel) Get(id int) (Post, error) {
 		}
 	}
 
+	tags, err := m.AllTagsForPost(p.ID)
+	if err != nil {
+		return Post{}, err
+	}
+
+	p.Tags = tags
+
 	return p, nil
 }
 
@@ -134,6 +195,13 @@ func (m *PostModel) GetByURL(url string) (Post, error) {
 			return Post{}, err
 		}
 	}
+
+	tags, err := m.AllTagsForPost(p.ID)
+	if err != nil {
+		return Post{}, err
+	}
+
+	p.Tags = tags
 
 	return p, nil
 }
@@ -162,6 +230,13 @@ func (m *PostModel) Latest(n int) ([]Post, error) {
 		p.ParseBody()
 
 		p.URL = url.PathEscape(p.URL)
+
+		tags, err := m.AllTagsForPost(p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		p.Tags = tags
 
 		posts = append(posts, p)
 	}
@@ -197,6 +272,13 @@ func (m *PostModel) All() ([]Post, error) {
 		p.ParseBody()
 
 		p.URL = url.PathEscape(p.URL)
+
+		tags, err := m.AllTagsForPost(p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		p.Tags = tags
 
 		posts = append(posts, p)
 	}
@@ -238,16 +320,23 @@ func (m *PostModel) AllDrafts() ([]Post, error) {
 	var drafts []Post
 
 	for rows.Next() {
-		var d Post
+		var p Post
 
-		err := rows.Scan(&d.ID, &d.Title, &d.Body)
+		err := rows.Scan(&p.ID, &p.Title, &p.Body)
 		if err != nil {
 			return nil, err
 		}
 
-		d.ParseBody()
+		p.ParseBody()
 
-		drafts = append(drafts, d)
+		tags, err := m.AllTagsForPost(p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		p.Tags = tags
+
+		drafts = append(drafts, p)
 	}
 
 	if err = rows.Err(); err != nil {

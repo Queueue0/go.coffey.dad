@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"io/fs"
+	"net/url"
 	"path/filepath"
 	"time"
 
@@ -37,6 +38,7 @@ func humanDate(t time.Time) string {
 
 var functions = template.FuncMap{
 	"humanDate": humanDate,
+	"pathEscape": url.PathEscape,
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

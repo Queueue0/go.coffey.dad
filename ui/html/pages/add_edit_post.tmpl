@@ -36,8 +36,9 @@
       <div class="control">
         <input type="text" class="input" id="tagBox" list="taglist">
         <datalist id="taglist">
-          <option value="QPass">
-          <option value="Test">
+          {{range .Tags}}
+            <option value="{{.Name}}">
+          {{end}}
         </datalist>
       </div>
       <div class="control">
@@ -45,6 +46,14 @@
       </div>
     </div>
     <div class="field is-grouped is-grouped-multiline" id="tagZone">
+      {{range.Form.Tags}}
+      <div class="control">
+        <div class="tags has-addons">
+          <span class="tag {{.Color}}" >{{.Name}}</span>
+          <button class="tag is-delete" type="button"></button>
+        </div>
+      </div>
+      {{end}}
     </div>
     <div class="field">
       {{with .Form.FieldErrors.body}}
