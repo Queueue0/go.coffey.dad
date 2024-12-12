@@ -248,6 +248,23 @@ func (m *PostModel) Latest(n int) ([]Post, error) {
 	return posts, nil
 }
 
+func (m *PostModel) Filter(isDraft bool, tagName string) ([]Post, error) {
+	posts, err := m.All()
+	if err != nil {
+		return nil, err
+	}
+
+	t := Tag{Name: tagName}
+	fPosts := []Post{}
+	for _, p := range posts {
+		if p.Tags.Contains(t) {
+			fPosts = append(fPosts, p)
+		}
+	}
+
+	return fPosts, nil
+}
+
 func (m *PostModel) All() ([]Post, error) {
 	stmt := `SELECT id, title, body, created, modified, url, is_draft FROM post
 	WHERE is_draft = FALSE ORDER BY created DESC`

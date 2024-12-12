@@ -75,7 +75,24 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) postList(w http.ResponseWriter, r *http.Request) {
-	posts, err := app.posts.All()
+	filter, err := url.PathUnescape(r.URL.Query().Get("filter"))
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	var posts []models.Post
+	if filter == "" {
+		posts, err = app.posts.All()
+	} else {
+		posts, err = app.posts.Filter(false, filter)
+	}
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	tags, err := app.posts.AllUsedTags()
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -84,6 +101,7 @@ func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 	flash := app.sessionManager.PopString(r.Context(), "flash")
 	data := app.newTemplateData(r)
 	data.Posts = posts
+	data.Tags = tags
 	data.Flash = flash
 
 	app.render(w, r, http.StatusOK, "post_list.tmpl", data)

@@ -197,3 +197,34 @@ func (m *PostModel) AllTags() (TagList, error) {
 
 	return tags, nil
 }
+
+// Only returns tags that are acually on non-draft posts
+func (m *PostModel) AllUsedTags() (TagList, error) {
+	stmt := `SELECT t.id, t.name, t.color FROM tag t
+	INNER JOIN post_tag pt ON t.id = pt.tag_id
+	INNER JOIN post p ON p.id = pt.post_id
+	WHERE p.is_draft = FALSE`
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []Tag
+	for rows.Next() {
+		var t Tag
+		err := rows.Scan(&t.ID, &t.Name, &t.Color)
+		if err != nil {
+			return nil, err
+		}
+
+		tags = append(tags, t)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tags, nil
+}

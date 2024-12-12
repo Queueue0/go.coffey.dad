@@ -24,6 +24,21 @@
       </div>
     </div>
   {{end}}
+  <div class="control has-icons-left">
+    <div class="select mb-3 ml-3">
+      <select name="tagFilter" id="tagFilter">
+        <option value="" selected>Filter by tag</option>
+        {{range .Tags}}
+        <option value="{{pathEscape .Name}}">
+          <span class="tag {{.Color}} post-tag">{{.Name}}</span>
+        </option>
+        {{end}}
+      </select>
+    </div>
+    <div class="icon is-small is-left">
+      <i class="pl-6" data-feather="filter"></i>
+    </div>
+  </div>
   {{template "postlist" .}}
 </div>
 {{end}}
