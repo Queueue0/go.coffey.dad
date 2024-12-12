@@ -16,6 +16,7 @@ type templateData struct {
 	Post            models.Post
 	Posts           []models.Post
 	Tags            []models.Tag
+	Filter			string
 	NewPost         bool
 	Form            any
 	Flash           string

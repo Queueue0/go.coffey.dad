@@ -103,6 +103,7 @@ func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 	data.Posts = posts
 	data.Tags = tags
 	data.Flash = flash
+	data.Filter = url.PathEscape(filter)
 
 	app.render(w, r, http.StatusOK, "post_list.tmpl", data)
 }

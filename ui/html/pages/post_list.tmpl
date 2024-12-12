@@ -2,6 +2,7 @@
 
 {{define "scripts"}}
 <script src="/static/js/pltags.js"></script>
+<script src="/static/js/tag_filter.js"></script>
 {{end}}
 
 {{define "main"}}
@@ -24,19 +25,23 @@
       </div>
     </div>
   {{end}}
-  <div class="control has-icons-left">
-    <div class="select mb-3 ml-3">
-      <select name="tagFilter" id="tagFilter">
-        <option value="" selected>Filter by tag</option>
-        {{range .Tags}}
-        <option value="{{pathEscape .Name}}">
-          <span class="tag {{.Color}} post-tag">{{.Name}}</span>
-        </option>
-        {{end}}
-      </select>
+  <div class="field has-addons">
+    <div class="control">
+      <div class="select mb-3 ml-3">
+        <select name="tagFilter" id="tagFilter">
+          <option value="" {{if eq .Filter "" }}selected{{end}}>Filter by tag</option>
+          {{$filter := .Filter}}
+          {{range .Tags}}
+          {{$uri := pathEscape .Name}}
+          <option value="{{$uri}}" {{if eq $uri $filter}}selected{{end}}>
+            <span class="tag {{.Color}} post-tag">{{.Name}}</span>
+          </option>
+          {{end}}
+        </select>
+      </div>
     </div>
-    <div class="icon is-small is-left">
-      <i class="pl-6" data-feather="filter"></i>
+    <div class="control">
+      <a href="/blog" class="button is-info" id="filterLink">Filter</a>
     </div>
   </div>
   {{template "postlist" .}}
