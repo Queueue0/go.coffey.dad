@@ -200,7 +200,7 @@ func (m *PostModel) AllTags() (TagList, error) {
 
 // Only returns tags that are acually on non-draft posts
 func (m *PostModel) AllUsedTags() (TagList, error) {
-	stmt := `SELECT t.id, t.name, t.color FROM tag t
+	stmt := `SELECT DISTINCT t.id, t.name, t.color FROM tag t
 	INNER JOIN post_tag pt ON t.id = pt.tag_id
 	INNER JOIN post p ON p.id = pt.post_id
 	WHERE p.is_draft = FALSE`
