@@ -43,6 +43,13 @@
         </span>
       </div>
     </div>
+    {{if $.IsAuthenticated}}
+      {{if not .IsDraft}}
+      <div class="card-footer">
+        <a class="card-footer-item" href="/blog/edit/{{.ID}}">Edit Post</a>
+      </div>
+      {{end}}
+    {{end}}
   </div>
   {{end}}
   {{else}}
