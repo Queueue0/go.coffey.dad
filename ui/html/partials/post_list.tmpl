@@ -1,60 +1,60 @@
 {{define "postlist"}}
-  {{if .Posts}}
-  {{range .Posts}}
-  <div class="card mb-3">
-    <header class="card-header">
-      <div class="card-header-title fixed-grid has-1-cols pb-0">
-        <div class="grid">
-          <div class="cell">
-            <h3 class="is-size-3 has-text-weight-bold">{{.Title}}</h3>
-          </div>
-          <div class="cell">
-            <div class="field is-grouped is-grouped-multiline">
-              {{range .Tags}}
-              <div class="control">
-                <a href="/blog?filter={{pathEscape .Name}}" class="tag {{.Color}} post-tag">{{.Name}}</a>
-              </div>
-              {{end}}
+{{if .Posts}}
+{{range .Posts}}
+<div class="card mb-3">
+  <header class="card-header">
+    <div class="card-header-title fixed-grid has-1-cols pb-0">
+      <div class="grid">
+        <div class="cell">
+          <h3 class="is-size-3 has-text-weight-bold">{{.Title}}</h3>
+        </div>
+        <div class="cell">
+          <div class="field is-grouped is-grouped-multiline">
+            {{range .Tags}}
+            <div class="control">
+              <a href="/blog?filter={{pathEscape .Name}}" class="tag {{.Color}} post-tag">{{.Name}}</a>
             </div>
+            {{end}}
           </div>
         </div>
       </div>
-      <p class="card-header-icon">
-        Posted {{humanDate .Created}}
-        {{if (ne .Modified .Created)}}
-        <br>
-        Edited &nbsp;{{humanDate .Modified}}
-        {{end}}
-      </p>
-    </header>
-    <div class="card-content is-clipped readmore-card">
-      <div class="content">
-        {{.Body}}
-        <span class="readmore">
-          {{if .IsDraft}}
-          <a class="has-text-grey-light has-text-weight-medium" href="/blog/drafts/edit/{{.ID}}">
-            Edit Draft
-          </a>
-          {{else}}
-          <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.URL}}">
-            Read Full Post
-          </a>
-          {{end}}
-        </span>
-      </div>
     </div>
-    {{if $.IsAuthenticated}}
-      {{if not .IsDraft}}
-      <div class="card-footer">
-        <a class="card-footer-item" href="/blog/edit/{{.ID}}">Edit Post</a>
-      </div>
+    <p class="card-header-icon">
+      Posted {{humanDate .Created}}
+      {{if (ne .Modified .Created)}}
+      <br>
+      Edited &nbsp;{{humanDate .Modified}}
       {{end}}
-    {{end}}
+    </p>
+  </header>
+  <div class="card-content is-clipped readmore-card">
+    <div class="content">
+      {{.Body}}
+      <span class="readmore">
+        {{if .IsDraft}}
+        <a class="has-text-grey-light has-text-weight-medium" href="/blog/drafts/edit/{{.ID}}">
+          Edit Draft
+        </a>
+        {{else}}
+        <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.URL}}">
+          Read Full Post
+        </a>
+        {{end}}
+      </span>
+    </div>
+  </div>
+  {{if $.IsAuthenticated}}
+  {{if not .IsDraft}}
+  <div class="card-footer">
+    <a class="card-footer-item" href="/blog/edit/{{.ID}}">Edit Post</a>
   </div>
   {{end}}
-  {{else}}
-  <div class="is-flex is-justify-content-center">
-    <p>There's nothing here!</p>
-  </div>
   {{end}}
+</div>
+{{end}}
+{{else}}
+<div class="is-flex is-justify-content-center">
+  <p>There's nothing here!</p>
+</div>
+{{end}}
 {{end}}

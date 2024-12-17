@@ -7,18 +7,18 @@
   <div class="columns is-centered is-vcentered">
     <div class="column is-5-tablet is-4-desktop is-3-widescreen">
       {{range .Form.NonFieldErrors}}
-        <div class="message is-danger">
-          <div class="message-body">
-            {{.}}
-          </div>
+      <div class="message is-danger">
+        <div class="message-body">
+          {{.}}
         </div>
+      </div>
       {{end}}
       <form method="POST" action="/login" class="box">
         <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
         <div class="field">
           <label class="label">Username</label>
           {{with .Form.FieldErrors.username}}
-            <label class="has-text-danger">{{.}}</label>
+          <label class="has-text-danger">{{.}}</label>
           {{end}}
           <div class="control has-icons-left">
             <input type="text" name="username" class="input">
@@ -30,7 +30,7 @@
         <div class="field">
           <label class="label">Password</label>
           {{with .Form.FieldErrors.password}}
-            <label class="has-text-danger">{{.}}</label>
+          <label class="has-text-danger">{{.}}</label>
           {{end}}
           <div class="control has-icons-left">
             <input type="password" name="password" class="input">

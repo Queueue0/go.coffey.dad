@@ -37,7 +37,7 @@
         <input type="text" class="input" id="tagBox" list="taglist">
         <datalist id="taglist">
           {{range .Tags}}
-            <option value="{{.Name}}">
+          <option value="{{.Name}}"></option>
           {{end}}
         </datalist>
       </div>
@@ -49,7 +49,7 @@
       {{range.Form.Tags}}
       <div class="control">
         <div class="tags has-addons">
-          <span class="tag {{.Color}}" >{{.Name}}</span>
+          <span class="tag {{.Color}}">{{.Name}}</span>
           <button class="tag is-delete" type="button"></button>
         </div>
       </div>
@@ -68,13 +68,15 @@
         <div class="level-item">
           <div class="field is-grouped">
             <div class="control">
-              <button type="button" id="submitBtn" class="button is-success is-soft">{{if .Post.IsDraft}}Publish{{else}}Submit{{end}}</button>
+              <button type="button" id="submitBtn" class="button is-success is-soft">{{if
+                .Post.IsDraft}}Publish{{else}}Submit{{end}}</button>
             </div>
-              <div class="control">
-                <button type="button" id="asDraftButton" class="button is-info is-soft">{{if .Post.IsDraft}}Save{{else}}{{if .NewPost}}Save As Draft{{else}}Unpublish{{end}}{{end}}</button>
-              </div>
             <div class="control">
-              <a href="/blog" class="button is-info is-soft">Cancel</a>
+              <button type="button" id="asDraftButton" class="button is-info is-soft">{{if
+                .Post.IsDraft}}Save{{else}}{{if .NewPost}}Save As Draft{{else}}Unpublish{{end}}{{end}}</button>
+            </div>
+            <div class="control">
+              <a href="/blog{{if .Post.IsDraft}}/drafts{{end}}" class="button is-info is-soft">Cancel</a>
             </div>
           </div>
         </div>

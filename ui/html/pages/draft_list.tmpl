@@ -9,18 +9,18 @@
   <!-- Because the lack of this title has confused me in the past -->
   <h1 class="title is-1">Drafts</h1>
   {{if .IsAuthenticated}}
-    <div class="level mb-3 ml-3 is-mobile">
-      <div class="level-left">
-        <div class="level-item">
-          <a class="button is-info is-soft" href="/blog">
-            <i class="pr-1" data-feather="arrow-left-circle"></i>Back to Posts</a>
-        </div>
-        <div class="level-item">
-          <a class="button is-info is-soft" href="/upload">
-            <i class="pr-1" data-feather="folder-plus"></i>Upload Files</a>
-        </div>
+  <div class="level mb-3 ml-3 is-mobile">
+    <div class="level-left">
+      <div class="level-item">
+        <a class="button is-info is-soft" href="/blog">
+          <i class="pr-1" data-feather="arrow-left-circle"></i>Back to Posts</a>
+      </div>
+      <div class="level-item">
+        <a class="button is-info is-soft" href="/upload">
+          <i class="pr-1" data-feather="folder-plus"></i>Upload Files</a>
       </div>
     </div>
+  </div>
   {{end}}
   {{template "postlist" .}}
 </div>

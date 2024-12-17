@@ -1,7 +1,7 @@
 {{define "title"}}Upload Images{{end}}
 
 {{define "scripts"}}
-<script src="/static/js/upload.js"></script> 
+<script src="/static/js/upload.js"></script>
 {{end}}
 
 {{define "main"}}
@@ -10,11 +10,11 @@
   <p class="has-text-weight-light is-italic mb-1">Upload any number of files</p>
   <hr>
   {{range .Form.NonFieldErrors}}
-    <div class="message is-danger">
-      <div class="message-body">
-        {{.}}
-      </div>
+  <div class="message is-danger">
+    <div class="message-body">
+      {{.}}
     </div>
+  </div>
   {{end}}
   <form enctype="multipart/form-data" method="post">
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>

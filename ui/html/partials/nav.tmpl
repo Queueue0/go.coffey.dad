@@ -18,18 +18,18 @@
       </a>
     </div>
     {{if .IsAuthenticated}}
-      <div class="navbar-end">
-        <div class="navbar-item">
-          <div class="field is-grouped">
-            <form method="POST" action="/logout" class="control">
-              <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
-              <button class="button is-primary is-soft">
-                Log Out
-              </button>
-            </form>
-          </div>
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="field is-grouped">
+          <form method="POST" action="/logout" class="control">
+            <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+            <button class="button is-primary is-soft">
+              Log Out
+            </button>
+          </form>
         </div>
       </div>
+    </div>
     {{end}}
   </div>
 </nav>

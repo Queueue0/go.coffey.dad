@@ -8,22 +8,22 @@
 {{define "main"}}
 <div class="container is-max-desktop">
   {{if .IsAuthenticated}}
-    <div class="level mb-3 ml-3 is-mobile">
-      <div class="level-left">
-        <div class="level-item">
-          <a class="button is-info is-soft" href="/blog/new">
-            <i class="pr-1" data-feather="plus-square"></i>Add New Post</a>
-        </div>
-        <div class="level-item">
-          <a class="button is-info is-soft" href="/blog/drafts">
-            <i class="pr-1" data-feather="file-text"></i>Drafts</a>
-        </div>
-        <div class="level-item">
-          <a class="button is-info is-soft" href="/upload">
-            <i class="pr-1" data-feather="folder-plus"></i>Upload Files</a>
-        </div>
+  <div class="level mb-3 ml-3 is-mobile">
+    <div class="level-left">
+      <div class="level-item">
+        <a class="button is-info is-soft" href="/blog/new">
+          <i class="pr-1" data-feather="plus-square"></i>Add New Post</a>
+      </div>
+      <div class="level-item">
+        <a class="button is-info is-soft" href="/blog/drafts">
+          <i class="pr-1" data-feather="file-text"></i>Drafts</a>
+      </div>
+      <div class="level-item">
+        <a class="button is-info is-soft" href="/upload">
+          <i class="pr-1" data-feather="folder-plus"></i>Upload Files</a>
       </div>
     </div>
+  </div>
   {{end}}
   <div class="field has-addons">
     <div class="control">
