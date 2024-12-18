@@ -29,9 +29,11 @@
   <div class="container px-5">
     <div class="columns">
       <div class="column is-two-thirds-desktop is-offset-2-desktop is-10-tablet is-offset-1-tablet">
-        <figure class="image">
-          <img src="{{.Post.HeaderImage.Location}}" alt="Header image, not needed to understand the article" />
-        </figure>
+        <div class="box p-0 is-clipped">
+          <figure class="image">
+            <img src="{{.Post.HeaderImage.Location}}" alt="Header image, not needed to understand the article" />
+          </figure>
+        </div>
         <div class="columns">
           <div class="column">
             <h1 class="title is-1 is-italic">{{.Post.Title}}</h1>
