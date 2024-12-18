@@ -2,6 +2,11 @@
 {{if .Posts}}
 {{range .Posts}}
 <div class="card mb-3">
+  <div class="card-image">
+    <figure class="image is-3by1 is-clipped">
+      <img src="{{.HeaderImage.Location}}" alt="Header image" />
+    </figure>
+  </div>
   <header class="card-header">
     <div class="card-header-title fixed-grid has-1-cols pb-0">
       <div class="grid">
@@ -18,7 +23,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> 
     <p class="card-header-icon">
       Posted {{humanDate .Created}}
       {{if (ne .Modified .Created)}}
@@ -30,26 +35,18 @@
   <div class="card-content is-clipped readmore-card">
     <div class="content">
       {{.Body}}
-      <span class="readmore">
-        {{if .IsDraft}}
-        <a class="has-text-grey-light has-text-weight-medium" href="/blog/drafts/edit/{{.ID}}">
-          Edit Draft
-        </a>
-        {{else}}
-        <a class="has-text-grey-light has-text-weight-medium" href="/blog/post/{{.URL}}">
-          Read Full Post
-        </a>
-        {{end}}
-      </span>
     </div>
   </div>
-  {{if $.IsAuthenticated}}
-  {{if not .IsDraft}}
   <div class="card-footer">
+    <a href="/blog/post/{{.URL}}" class="card-footer-item">Read Full Post</a>
+    {{if $.IsAuthenticated}}
+    {{if not .IsDraft}}
     <a class="card-footer-item" href="/blog/edit/{{.ID}}">Edit Post</a>
+    {{else}}
+    <a class="card-footer-item" href="/blog/drafts/edit/{{.ID}}">Edit Draft</a>
+    {{end}}
+    {{end}}
   </div>
-  {{end}}
-  {{end}}
 </div>
 {{end}}
 {{else}}

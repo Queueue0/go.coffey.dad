@@ -63,6 +63,26 @@
         <textarea class="textarea" name="body" id="bodybox" placeholder="Body" rows="26">{{.Form.Body}}</textarea>
       </div>
     </div>
+    {{with .Form.FieldErrors.headerImage}}
+    <label class="has-text-danger">{{.}}</label>
+    {{end}}
+    <div class="field has-addons">
+      <div class="control is-expanded">
+        <input class="input" type="text" name="HeaderImageLocation" id="headerImgBox" placeholder="Header Image"
+          value="{{.Form.HeaderImageLocation}}">
+      </div>
+      <div class="control">
+        <button type="button" id="chooseHeaderImage" class="button is-info">Choose Header Image</button>
+      </div>
+    </div>
+    <div class="field">
+      {{with .Form.FieldErrors.description}}
+      <label class="has-text-danger">{{.}}</label>
+      {{end}}
+      <div class="control">
+        <textarea class="textarea" name="Description" placeholder="Description">{{.Form.Description}}</textarea>
+      </div>
+    </div>
     <div class="level">
       <div class="level-left">
         <div class="level-item">

@@ -138,7 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
   update_preview();
   touch_tags();
   document.getElementById("bodybox").addEventListener("input", update_preview);
-  document.getElementById("insert-image").addEventListener("click", () => {window.open('/upload/choose-image')});
+  document.getElementById("insert-image").addEventListener("click", () => {window.open('/choose-image')});
+  document.getElementById("chooseHeaderImage").addEventListener("click", () => {window.open('/choose-header-image')});
   document.getElementById("asDraftButton").addEventListener("click", () => {
     add_tag_fields();
 
@@ -187,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-function handlePopupResult(result) {
+function handleImageResult(result) {
   const imageStr = '![](' + result + ')';
   const bodybox = document.getElementById("bodybox");
   const cursorPos = bodybox.selectionStart;
@@ -197,4 +198,9 @@ function handlePopupResult(result) {
   bodybox.focus();
   bodybox.selectionEnd = end + 2;
   update_preview();
+}
+
+function handleHeaderImageResult(result) {
+  const headerImgBox = document.getElementById("headerImgBox");
+  headerImgBox.value = result;
 }

@@ -33,7 +33,7 @@
           {{$filter := .Filter}}
           {{range .Tags}}
           {{$uri := pathEscape .Name}}
-          <option value="{{$uri}}" {{if eq $uri $filter}}selected{{end}}>
+          <option value="{{$uri}}" {{if eq .Name $filter}}selected{{end}}>
             <span class="tag {{.Color}} post-tag">{{.Name}}</span>
           </option>
           {{end}}

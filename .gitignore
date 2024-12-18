@@ -4,3 +4,4 @@ tls
 uploads
 .env
 deploy.sh
+.*

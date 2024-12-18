@@ -1,7 +1,13 @@
 function closeSelf(sender) {
     try {
         window.opener.focus();
-        window.opener.handlePopupResult(sender.getAttribute("src"));
+        if (window.location.pathname == "/choose-image") {
+            window.opener.handleImageResult(sender.getAttribute("src"));
+        }
+
+        if (window.location.pathname == "/choose-header-image") {
+            window.opener.handleHeaderImageResult(sender.getAttribute("src"));
+        }
     }
     catch (err) {}
     window.close();

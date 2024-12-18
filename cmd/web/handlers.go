@@ -4,12 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"image"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
+
+	_ "image/jpeg"
+	_ "image/png"
 
 	"coffey.dad/internal/models"
 	"coffey.dad/internal/validator"
@@ -37,8 +41,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idparam)
 	if err != nil {
-		url, err := url.PathUnescape(idparam)
-		post, err = app.posts.GetByURL(url)
+		post, err = app.posts.GetByURL(idparam)
 		if err != nil {
 			if errors.Is(err, models.ErrNoRecord) {
 				app.notFound(w, r)
@@ -71,13 +74,15 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	data.Post = post
 	data.Flash = flash
 
+	app.logger.Info("Post Info", "Header Path", post.HeaderImage.Location, "Header MIME", post.HeaderImage.Mime)
+
 	app.render(w, r, http.StatusOK, "post_view.tmpl", data)
 }
 
 func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 	filter, err := url.PathUnescape(r.URL.Query().Get("filter"))
 	if err != nil {
-		app.serverError(w, r, err)
+		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
@@ -103,7 +108,7 @@ func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 	data.Posts = posts
 	data.Tags = tags
 	data.Flash = flash
-	data.Filter = url.PathEscape(filter)
+	data.Filter = filter
 
 	app.render(w, r, http.StatusOK, "post_list.tmpl", data)
 }
@@ -129,6 +134,8 @@ type postForm struct {
 	Tags                []models.Tag
 	Body                string `form:"body"`
 	IsDraft             bool   `form:"asDraft"`
+	HeaderImageLocation string
+	Description         string
 	validator.Validator `form:"-"`
 }
 
@@ -177,11 +184,7 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form.URL, err = url.PathUnescape(form.URL)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	form.URL = url.PathEscape(form.URL)
 
 	now := time.Now()
 	_, err = app.posts.Insert(models.Post{
@@ -192,6 +195,10 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		Created:  now,
 		Modified: now,
 		URL:      form.URL,
+		HeaderImage: models.Image{
+			Location: form.HeaderImageLocation,
+		},
+		Description: form.Description,
 	})
 
 	if err != nil {
@@ -211,9 +218,8 @@ func (app *application) newPostSubmit(w http.ResponseWriter, r *http.Request) {
 		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	} else {
-		u := url.PathEscape(form.URL)
 		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", u), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", form.URL), http.StatusSeeOther)
 	}
 }
 
@@ -301,12 +307,6 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form.URL, err = url.PathUnescape(form.URL)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
 	now := time.Now()
 	// If we are publishing a draft
 	if !form.IsDraft && p.IsDraft {
@@ -318,10 +318,14 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 	p.Title = form.Title
 	p.Body = template.HTML(form.Body)
 	p.IsDraft = form.IsDraft
-	p.URL = form.URL
+	p.URL = url.PathEscape(form.URL)
 	p.Tags = form.Tags
 	p.Modified = now
-
+	p.HeaderImage = models.Image{
+		Location: form.HeaderImageLocation,
+	}
+	p.Description = form.Description
+	
 	err = app.posts.Update(p)
 	if err != nil {
 		if errors.Is(err, models.ErrDuplicateUrl) {
@@ -340,9 +344,8 @@ func (app *application) editPostSubmit(w http.ResponseWriter, r *http.Request) {
 		app.sessionManager.Put(r.Context(), "flash", "Saved")
 		http.Redirect(w, r, "/blog/drafts", http.StatusSeeOther)
 	} else {
-		u := url.PathEscape(p.URL)
 		app.sessionManager.Put(r.Context(), "flash", "Published successfully!")
-		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", u), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/blog/post/%s", p.URL), http.StatusSeeOther)
 	}
 }
 
@@ -520,21 +523,71 @@ func (app *application) uploadPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) imagePicker(w http.ResponseWriter, r *http.Request) {
-	var fileNames []string
-	files, err := os.ReadDir("./uploads/")
+	files, err := os.Open("./uploads/")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	defer files.Close()
+
+	fileNames, err := files.Readdirnames(0)
+
+	data := app.newTemplateData(r)
+	data.FileNames = fileNames
+
+	app.render(w, r, http.StatusOK, "imagepicker.tmpl", data)
+}
+
+func (app *application) headerImagePicker(w http.ResponseWriter, r *http.Request) {
+	uploads, err := os.Open("./uploads/")
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	defer uploads.Close()
+
+	fileNames, err := uploads.Readdirnames(0)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	for _, file := range files {
-		if !file.IsDir() {
-			fileNames = append(fileNames, file.Name())
+	var finalFileNames []string
+	for _, n := range fileNames {
+		path := "./uploads/" + n
+		bytes, err := os.ReadFile(path)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
 		}
+
+		mime := http.DetectContentType(bytes)
+		if mime != "image/jpeg" && mime != "image/png" {
+			continue
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer f.Close()
+
+		i, _, err := image.DecodeConfig(f)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		if i.Width != 1200 || i.Height != 630 {
+			continue
+		}
+
+		finalFileNames = append(finalFileNames, n)
 	}
 
 	data := app.newTemplateData(r)
-	data.FileNames = fileNames
-
+	app.logger.Info(data.CurrentPage)
+	data.FileNames = finalFileNames
 	app.render(w, r, http.StatusOK, "imagepicker.tmpl", data)
 }

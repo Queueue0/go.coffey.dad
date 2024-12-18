@@ -13,10 +13,11 @@ import (
 
 type templateData struct {
 	CSRFToken       string
+	CurrentPage     string
 	Post            models.Post
 	Posts           []models.Post
 	Tags            []models.Tag
-	Filter			string
+	Filter          string
 	NewPost         bool
 	Form            any
 	Flash           string
@@ -38,7 +39,7 @@ func humanDate(t time.Time) string {
 }
 
 var functions = template.FuncMap{
-	"humanDate": humanDate,
+	"humanDate":  humanDate,
 	"pathEscape": url.PathEscape,
 }
 

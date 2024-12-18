@@ -3,9 +3,9 @@
 {{define "metadata"}}
 <meta property="og:title" content="{{.Post.Title}}" />
 <meta property="og:type" content="article" />
-<meta property="og:image" content="https://coffey.dad/static/img/bad_placeholder.png" />
-<meta property="og:image:secure_url" content="https://coffey.dad/static/img/bad_placeholder.png" />
-<meta property="og:image:type" content="image/png" />
+<meta property="og:image" content="https://coffey.dad{{.Post.HeaderImage.Location}}" />
+<meta property="og:image:secure_url" content="https://coffey.dad{{.Post.HeaderImage.Location}}" />
+<meta property="og:image:type" content="{{.Post.HeaderImage.Mime}}" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://coffey.dad/blog/post/{{.Post.URL}}" />
@@ -13,8 +13,8 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="@queueueue_" />
 <meta name="twitter:title" content="{{.Post.Title}}" />
-<meta name="twitter:description" content="A blog post on coffey.dad" />
-<meta name="twitter:image" content="https://coffey.dad/static/img/bad_placeholder.png" />
+<meta name="twitter:description" content="{{.Post.Description}}" />
+<meta name="twitter:image" content="https://coffey.dad{{.Post.HeaderImage.Location}}" />
 {{end}}
 
 {{define "scripts"}}
@@ -29,13 +29,16 @@
   <div class="container px-5">
     <div class="columns">
       <div class="column is-two-thirds-desktop is-offset-2-desktop is-10-tablet is-offset-1-tablet">
+        <figure class="image">
+          <img src="{{.Post.HeaderImage.Location}}" alt="Header image, not needed to understand the article" />
+        </figure>
         <div class="columns">
           <div class="column">
             <h1 class="title is-1 is-italic">{{.Post.Title}}</h1>
           </div>
           <div class="column is-narrow">
             {{if .IsAuthenticated}}
-            <a class="button" href="/blog/edit/{{.Post.ID}}">Edit Post</a>
+            <a class="button mt-2" href="/blog/edit/{{.Post.ID}}">Edit Post</a>
             {{end}}
           </div>
         </div>

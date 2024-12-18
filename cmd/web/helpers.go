@@ -29,6 +29,7 @@ func (app *application) notFound(w http.ResponseWriter, r *http.Request) {
 func (app *application) newTemplateData(r *http.Request) templateData {
 	return templateData{
 		CSRFToken:       nosurf.Token(r),
+		CurrentPage:     r.URL.Path,
 		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
