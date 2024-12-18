@@ -247,6 +247,8 @@ func (app *application) editPost(w http.ResponseWriter, r *http.Request) {
 		URL:   post.URL,
 		Tags:  post.Tags,
 		Body:  string(post.Body),
+		HeaderImageLocation: post.HeaderImage.Location,
+		Description: post.Description,
 	}
 
 	data := app.newTemplateData(r)
