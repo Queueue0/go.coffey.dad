@@ -113,6 +113,10 @@ func (app *application) postList(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "post_list.tmpl", data)
 }
 
+func (app *application) repoList(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Repo List"))
+}
+
 func (app *application) draftList(w http.ResponseWriter, r *http.Request) {
 	drafts, err := app.posts.AllDrafts()
 	if err != nil {

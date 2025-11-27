@@ -29,6 +29,7 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/blog/post/:id", dynamic.ThenFunc(app.postView))
 	router.Handler(http.MethodGet, "/login", dynamic.ThenFunc(app.login))
 	router.Handler(http.MethodPost, "/login", dynamic.ThenFunc(app.loginSubmit))
+	router.Handler(http.MethodGet, "/repos", dynamic.ThenFunc(app.repoList))
 
 	protected := dynamic.Append(app.requireAuthentication)
 
